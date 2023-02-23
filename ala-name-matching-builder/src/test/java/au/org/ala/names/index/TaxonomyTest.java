@@ -18,7 +18,9 @@ package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
+import au.org.ala.names.util.FileUtils;
 import au.org.ala.names.util.TestUtils;
+import au.org.ala.vocab.ALATerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.junit.After;
@@ -38,12 +40,16 @@ import static org.junit.Assert.*;
  */
 public class TaxonomyTest extends TestUtils {
     private Taxonomy taxonomy = null;
+    private File output = null;
 
     @After
     public void cleanup() throws Exception {
         if (this.taxonomy != null) {
             this.taxonomy.close();
             this.taxonomy.clean();
+        }
+        if (this.output != null && this.output.exists()) {
+            FileUtils.clear(this.output, true);
         }
     }
     
@@ -918,7 +924,7 @@ public class TaxonomyTest extends TestUtils {
         assertSame(tci1, tc1.getResolved(tci1));
         assertSame(tci2, tc2.getResolved(tci2));
         assertSame(tci3, tc2.getResolved(tci3));
-        assertSame(tci2, tc2.getRepresentative());
+        assertSame(tci3, tc2.getRepresentative());
     }
 
     @Test
@@ -1008,6 +1014,21 @@ public class TaxonomyTest extends TestUtils {
         assertFalse(tci4.isOutput());
     }
 
+    // Issue 171
+    @Test
+    public void testSyntheticTaxon3() throws Exception {
+        this.output = FileUtils.mkTempDir("merged", "", null);
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-40.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        this.taxonomy.createDwCA(this.output);
+        File identifier = new File(this.output, "identifier.txt");
+        assertEquals(13, this.rowCount(identifier));
+    }
+
     @Test
     public void testParent1() throws Exception {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
@@ -1021,7 +1042,68 @@ public class TaxonomyTest extends TestUtils {
         TaxonConceptInstance tci3 = this.taxonomy.getInstance("Family-1-1");
         assertSame(tci2, tci1.getResolvedParent());
         assertSame(tci3, tci2.getResolvedParent());
-        assertNull(tci3.getResolvedParent());
+        assertSame(taxonomy.getInferenceProvider().getUnknownTaxonID(), tci3.getResolvedParent().getTaxonID());
+    }
+
+    @Test
+    public void testDistribution1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource locations1 = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
+        DwcaNameSource source1 = new DwcaNameSource(new File(this.getClass().getResource("dwca-2").getFile()));
+        this.taxonomy.load(Arrays.asList(locations1, source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("https://biodiversity.org.au/afd/taxa/e9d6fbbd-1505-4073-990a-dc66c930dad6");
+        assertNotNull(tci1.getDistribution());
+        assertEquals(3, tci1.getDistribution().size());
+        assertEquals("http://vocab.getty.edu/tgn/7001828", tci1.getDistribution().get(0).getLocation().getLocationID());
+        assertEquals("AU", tci1.getDistribution().get(0).getAdditional().get(DwcTerm.countryCode));
+    }
+
+    @Test
+    public void testDistribution2() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource locations1 = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
+        DwcaNameSource source1 = new DwcaNameSource(new File(this.getClass().getResource("dwca-2").getFile()));
+        this.taxonomy.load(Arrays.asList(locations1, source1));
+        this.taxonomy.resolve();
+        this.output = FileUtils.mkTempDir("merged", "", null);
+        this.taxonomy.createDwCA(this.output);
+        File taxon = new File(this.output, "taxon.txt");
+        assertTrue(taxon.exists());
+        //this.dumpFile(taxon);
+        assertEquals(19, this.rowCount(taxon));
+        File distribution = new File(this.output, "distribution.txt");
+        assertTrue(distribution.exists());
+        //this.dumpFile(distribution);
+        assertEquals(4, this.rowCount(distribution));
+    }
+
+    @Test
+    public void testReferences1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource locations1 = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
+        DwcaNameSource references1 = new DwcaNameSource(new File(this.getClass().getResource("references").getFile()));
+        DwcaNameSource source1 = new DwcaNameSource(new File(this.getClass().getResource("dwca-2").getFile()));
+        this.taxonomy.load(Arrays.asList(locations1, references1, source1));
+        this.taxonomy.resolve();
+        this.taxonomy.createWorkingIndex();
+        this.taxonomy.resolveUnplacedReferences();
+        this.output = FileUtils.mkTempDir("merged", "", null);
+        this.taxonomy.createDwCA(this.output);
+        File taxon = new File(this.output, "taxon.txt");
+        assertTrue(taxon.exists());
+        //this.dumpFile(taxon);
+        assertEquals(19, this.rowCount(taxon));
+        File reference = new File(this.output, "reference.txt");
+        assertTrue(reference.exists());
+        this.dumpFile(reference);
+        assertEquals(3, this.rowCount(reference));
     }
 
 }

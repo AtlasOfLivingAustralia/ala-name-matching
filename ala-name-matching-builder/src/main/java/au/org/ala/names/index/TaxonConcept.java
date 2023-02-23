@@ -109,6 +109,21 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     }
 
     /**
+     * Get the distribution for this instance.
+     *
+     * @param instance The instance
+     *
+     * @return The distribution associated with the instance
+     */
+    public List<Distribution> getDistribution(TaxonConceptInstance instance) {
+        // If this instance has been resolved onto another instance in the same concept, then us the resolved instance
+        TaxonConceptInstance resolved = this.resolution.getResolved(instance);
+        if (resolved.getContainer() == this)
+            instance = resolved;
+        return this.resolution.getDistribution(instance);
+    }
+
+    /**
      * Add an instance to the taxon concept.
      *
      * @param instance The instance
@@ -195,6 +210,12 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
         element.cleared = true;
     }
 
+    public void resolveDistribution(Taxonomy taxonomy) {
+        if (this.cleared)
+            return;
+        taxonomy.getResolver().resolveDistribution(this, this.resolution, taxonomy);
+    }
+
     /**
      * Write this taxon concept to a dwca writer.
      * <p>
@@ -210,34 +231,47 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
             return;
         if (!taxonomy.isWritable(this))
             return;
-        for (TaxonConceptInstance tci : this.resolution.getUsed()) {
+        Set<String> seen = new HashSet<>();
+        for (TaxonConceptInstance tci : this.getUsed()) {
             if (!tci.isOutput()) {
+                continue;
+            }
+            if (seen.contains(tci.getTaxonID())) {
+                taxonomy.report(IssueType.PROBLEM, "taxonConcept.duplicate.used", tci, null);
                 continue;
             }
             Collection<TaxonConceptInstance> allocated = this.resolution.getChildren(tci);
             if (allocated == null || allocated.isEmpty()) {
                 taxonomy.report(IssueType.NOTE, "taxonConcept.noInstances", tci, null);
             } else {
+                seen.add(tci.getTaxonID());
                 writer.newRecord(tci.getTaxonID());
-                Map<Term, String> values = tci.getTaxonMap(taxonomy);
+                taxonomy.count("count.write.taxonConcept");
+                Map<Term, String> values = tci.getTaxonMap(taxonomy, true);
                 for (Term term : taxonomy.outputTerms(DwcTerm.Taxon))
                     if (term != DwcTerm.taxonID) // Already added as coreId
                         writer.addCoreColumn(term, values.get(term));
+                List<Distribution> distribution = this.resolution.getDistribution(tci);
+                if (distribution != null) {
+                    for (Distribution dist: distribution) {
+                        dist.writeExtension(taxonomy, writer);
+                    }
+                }
                 for (TaxonConceptInstance sub : allocated) {
                     if (!sub.isOutput())
                         continue;
-                    this.writeExtension(ALATerm.TaxonVariant, sub == tci ? values : sub.getTaxonMap(taxonomy), taxonomy, writer);
+                    this.writeExtension(ALATerm.TaxonVariant, sub == tci ? values : sub.getTaxonMap(taxonomy, false), taxonomy, writer);
                     taxonomy.count("count.write.taxonConceptInstance");
                     for (Map<Term, String> id : sub.getIdentifierMaps(taxonomy))
                         this.writeExtension(GbifTerm.Identifier, id, taxonomy, writer);
                     for (Map<Term, String> vn : sub.getVernacularMaps(taxonomy))
                         this.writeExtension(GbifTerm.VernacularName, vn, taxonomy, writer);
-                    for (Map<Term, String> dist : sub.getDistributionMaps(taxonomy))
-                        this.writeExtension(GbifTerm.Distribution, dist, taxonomy, writer);
+                    for (Map<Term, String> vn : sub.getReferenceMaps(taxonomy))
+                        this.writeExtension(GbifTerm.Reference, vn, taxonomy, writer);
                 }
             }
         }
-        taxonomy.count("count.write.taxonConcept");
+        taxonomy.count("count.write.taxonConcept.base");
     }
 
     private void writeExtension(Term type, Map<Term, String> values, Taxonomy taxonomy, DwcaWriter writer) throws IOException {
@@ -339,6 +373,14 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
      */
     public List<TaxonConceptInstance> getPrincipals() {
         return this.resolution == null ? null : this.resolution.getPrincipal();
+    }
+
+    /**
+     * Get the instances used in this concept.
+     * @return
+     */
+    public List<TaxonConceptInstance> getUsed() {
+        return this.resolution == null ? this.getInstances() : this.resolution.getUsed();
     }
 
     /**

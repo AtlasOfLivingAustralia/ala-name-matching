@@ -27,45 +27,45 @@ package au.org.ala.names.model;
  */
 public enum TaxonomicType {
     /** A taxon explicitly placed in the taxonomic tree */
-    ACCEPTED("accepted", TaxonomicTypeGroup.ACCEPTED, true, true, false, false, false, true),
+    ACCEPTED("accepted", TaxonomicTypeGroup.ACCEPTED, true, true, false, false, false, false, true),
     /** A taxon placed in the taxonomiuc tree by an algorithm */
-    INFERRED_ACCEPTED("inferredAccepted", TaxonomicTypeGroup.ACCEPTED, true, true, false, false, false, true),
+    INFERRED_ACCEPTED("inferredAccepted", TaxonomicTypeGroup.ACCEPTED, true, true, false, false, false, false, true),
     /** A generic synonym */
-    SYNONYM("synonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, true),
+    SYNONYM("synonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, false, true),
     /** A homotypic synonym (botany, true). A nomenclatural synonym, meaning that the same taxon has gone under a different name. This can occur when two people describe the same species. @see #OBJECTIVE_SYNONYM */
-    HOMOTYPIC_SYNONYM("homotypicSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, true),
+    HOMOTYPIC_SYNONYM("homotypicSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, false, true),
     /** An objective synonym (zoology, true). A nomenclatural synonym, meaning that the same taxon has gone under a different name. This can occur when two people describe the same species. @see #HOMOTYPIC_SYNONYM */
-    OBJECTIVE_SYNONYM("objectiveSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, true),
+    OBJECTIVE_SYNONYM("objectiveSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, false, true),
     /** A heterotypic synonym (botany, true). A taxonomic synonym, meaning that a species that was originally considered to be separate has been lumped into another species. @see #SUBJECTIVE_SYNONYM  */
-    HETEROTYPIC_SYNONYM("heterotypicSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, true),
+    HETEROTYPIC_SYNONYM("heterotypicSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, false, true),
     /** A subjective synonym (zoology, true). A taxonomic synonym, meaning that a species that was originally considered to be separate has been lumped into another species. A subjective synonym, since whether they are synonymns or not is a matter of opinion. @see #HETEROTYPIC_SYNONYM */
-    SUBJECTIVE_SYNONYM("subjectiveSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, true),
+    SUBJECTIVE_SYNONYM("subjectiveSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, false, true),
     /** A synonym where part of an original taxon has been divided. This means that the original name may still be in use or may have been mapped onto several other taxa. */
-    PRO_PARTE_SYNONYM("proParteSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, true),
+    PRO_PARTE_SYNONYM("proParteSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, false, true),
     /** A name incorrectly applied in a publication to a different species. However, the name itself is perfectly valid and has its own taxon. */
-    MISAPPLIED("misapplied", TaxonomicTypeGroup.MISAPPLIED, false, false, true, false, false, true),
+    MISAPPLIED("misapplied", TaxonomicTypeGroup.MISAPPLIED, false, false, true, false, false, true, true),
     /** A synonym inferred by an algorithm */
-    INFERRED_SYNONYM("inferredSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, true),
+    INFERRED_SYNONYM("inferredSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, false, true),
     /** A name that shouldn't be used, since it refers to something not found in the region of the occurrence record. */
-    EXCLUDED("excluded", TaxonomicTypeGroup.EXCLUDED, false, false, false, false, false, true),
+    EXCLUDED("excluded", TaxonomicTypeGroup.EXCLUDED, false, false, false, false, false, true, true),
     /** A taxon of uncertain placement */
-    INCERTAE_SEDIS("incertaeSedis", TaxonomicTypeGroup.INCERTAE_SEDIS, false, true, false, false, true, true),
+    INCERTAE_SEDIS("incertaeSedis", TaxonomicTypeGroup.INCERTAE_SEDIS, false, true, false, false, true, false, true),
     /** A taxon of doubtful identity, requiring further investigation, but placed in the taxonomy */
-    SPECIES_INQUIRENDA("speciesInquirenda", TaxonomicTypeGroup.INCERTAE_SEDIS, false, true, false, false, true, true),
+    SPECIES_INQUIRENDA("speciesInquirenda", TaxonomicTypeGroup.INCERTAE_SEDIS, false, true, false, false, true, false, true),
     /** An unplaced taxon (not a placeholder, just unplaced in the hierarchy, true) */
-    UNPLACED("unplaced", TaxonomicTypeGroup.UNPLACED, false, false, false, true, false, true, "unknown"),
+    UNPLACED("unplaced", TaxonomicTypeGroup.UNPLACED, false, false, false, true, false, false, true, "unknown"),
     /** An inferred unplaced taxon (also not a placeholder, just unplaced in the hierarchy, true) */
-    INFERRED_UNPLACED("inferredUnplaced", TaxonomicTypeGroup.UNPLACED, false, false, false, true, false, true),
+    INFERRED_UNPLACED("inferredUnplaced", TaxonomicTypeGroup.UNPLACED, false, false, false, true, false, false, true),
     /** An invalid taxon (usually needed to allow parents to be found */
-    INVALID("invalid", TaxonomicTypeGroup.INVALID, false, false, false, false, false, true),
+    INVALID("invalid", TaxonomicTypeGroup.INVALID, false, false, false, false, false, false, true),
     /** An inferred invalid taxon (usually needed to allow parents to be found */
-    INFERRED_INVALID("inferredInvalid", TaxonomicTypeGroup.INVALID, false, false, false, false, false, true),
+    INFERRED_INVALID("inferredInvalid", TaxonomicTypeGroup.INVALID, false, false, false, false, false, false, true),
     /** A dubious taxon */
-    DOUBTFUL("doubtful", TaxonomicTypeGroup.DOUBTFUL, false, false, false, false, false, true),
+    DOUBTFUL("doubtful", TaxonomicTypeGroup.DOUBTFUL, false, false, false, false, false, false, true),
     /** A name that occurs in other literature. */
-    MISCELLANEOUS_LITERATURE("miscellaneousLiterature", TaxonomicTypeGroup.MISCELLANEOUS, false, false, true, true, false, true),
+    MISCELLANEOUS_LITERATURE("miscellaneousLiterature", TaxonomicTypeGroup.MISCELLANEOUS, false, false, true, true, false, true, true),
     /** A pseudo-taxon created to link an odd source of a name to a result, always linked to an actual taxon. A principal because we want to capture this instance */
-    PSEUDO_TAXON("pseudoTaxon", TaxonomicTypeGroup.MISCELLANEOUS, true, false, true, false, false, false);
+    PSEUDO_TAXON("pseudoTaxon", TaxonomicTypeGroup.MISCELLANEOUS, true, false, true, false, false, false, false);
 
     /** The standardised term */
     private String term;
@@ -81,12 +81,14 @@ public enum TaxonomicType {
     private boolean unplaced;
     /** Is this a placeholder of some sort */
     private boolean placeholder;
+    /** Is this a geographic taxon, meaning that it is dependent on locality  */
+    private boolean geographic;
     /** Include in the output */
     private boolean output;
     /** Additional labels */
     private String[] labels;
 
-    TaxonomicType(String term, TaxonomicTypeGroup group, boolean primary, boolean accepted, boolean synonym, boolean unplaced, boolean placeholder, boolean output, String... labels) {
+    TaxonomicType(String term, TaxonomicTypeGroup group, boolean primary, boolean accepted, boolean synonym, boolean unplaced, boolean placeholder, boolean geographic, boolean output, String... labels) {
         this.term = term;
         this.group = group;
         this.primary = primary;
@@ -94,6 +96,7 @@ public enum TaxonomicType {
         this.synonym = synonym;
         this.unplaced = unplaced;
         this.placeholder = placeholder;
+        this.geographic = geographic;
         this.output = output;
         this.labels = labels;
     }
@@ -145,6 +148,15 @@ public enum TaxonomicType {
      */
     public boolean isSynonym() {
         return synonym;
+    }
+
+    /**
+     * Does this taxonomic type represent a concept with a geographic range
+     *
+     * @return True if a geographic taxon
+     */
+    public boolean isGeographic() {
+        return geographic;
     }
 
     /**

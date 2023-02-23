@@ -37,6 +37,7 @@ import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -93,6 +94,9 @@ public class ALANameSearcher {
             return -Float.compare(score1, score2);
         }
     };
+
+    /** Addition to a search query to ensure accepted taxa are included */
+    public static final Query PREFER_ACCEPTED = new BoostQuery(NameIndexField.iS_SYNONYM.search("F"), 20.0f);
 
     /**
      * A set of names that are cross rank homonyms.
@@ -983,13 +987,6 @@ public class ALANameSearcher {
         if (PhraseNameParser.RANK_MARKER.matcher(name).matches())
             throw new SearchResultException("Supplied scientific name is a rank marker.");
 
-        //remove all the "stop" words from the scientific name
-        try {
-            name = virusStopPattern.matcher(name).replaceAll(" ").trim();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-
         //According to http://en.wikipedia.org/wiki/Species spp. is used as follows:
         //The authors use "spp." as a short way of saying that something applies to many species within a genus,
         //but do not wish to say that it applies to all species within that genus.
@@ -1159,11 +1156,27 @@ public class ALANameSearcher {
             BooleanQuery.Builder builder = new BooleanQuery.Builder();
             for (Value value: compulsoryValues) {
                 if (value.value != null) {
-                    builder.add(value.field.search(value.value), BooleanClause.Occur.MUST);
-                    if (value.field == NameIndexField.NAME)
-                         scientificName = value.value.toString();
-                 }
-
+                    Query query = null;
+                    NameIndexField field = value.field;
+                    if (field == NameIndexField.NAME) {
+                        scientificName = value.value.toString();
+                        Matcher virus = virusStopPattern.matcher(scientificName);
+                        // Allow removal of all the virus "stop" words from the scientific name
+                        if (virus.find()) {
+                            BooleanQuery.Builder virusBuilder = new BooleanQuery.Builder();
+                            virusBuilder.add(field.search(scientificName), BooleanClause.Occur.SHOULD);
+                            String removed = virus.replaceAll(" ");
+                            virusBuilder.add(field.search(removed), BooleanClause.Occur.SHOULD);
+                            virusBuilder.add(field.search(removed.trim()), BooleanClause.Occur.SHOULD);
+                            query = virusBuilder.build();
+                        } else {
+                            query = field.search(value.value);
+                        }
+                    } else {
+                        query = field.search(value.value);
+                    }
+                    builder.add(query, BooleanClause.Occur.MUST);
+                }
             }
 
             if (rank != null) {
@@ -1179,7 +1192,8 @@ public class ALANameSearcher {
             }
             if (cl != null) {
                 this.appendLuceneQuery(cl, builder, true);
-             }
+            }
+            builder.add(PREFER_ACCEPTED, BooleanClause.Occur.SHOULD);
             Query query = builder.build();
 
             TopDocs hits = cbSearcher.search(query, max);//cbSearcher.search(boolQuery, max);

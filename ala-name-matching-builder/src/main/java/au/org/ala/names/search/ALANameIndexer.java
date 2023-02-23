@@ -18,6 +18,7 @@ import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.*;
 import au.org.ala.names.util.CleanedScientificName;
 import au.org.ala.names.util.TaxonNameSoundEx;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
@@ -47,10 +48,9 @@ import org.gbif.dwca.record.Record;
 import org.gbif.nameparser.PhraseNameParser;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -942,7 +942,7 @@ public class ALANameIndexer {
         } catch (org.gbif.api.exception.UnparsableException e) {
             //check to see if the name is a virus in which case an extra name is added without the virus key word
             if (e.type == NameType.VIRUS) {
-                NameIndexField.NAME.store(ALANameSearcher.virusStopPattern.matcher(name).replaceAll(" "), doc);
+                NameIndexField.NAME.store(ALANameSearcher.virusStopPattern.matcher(name).replaceAll(" ").trim(), doc);
             }
 
         } catch (Exception e) {
@@ -991,6 +991,15 @@ public class ALANameIndexer {
     protected String buildNameComplete(String name, String author, String nameComplete) {
         if (StringUtils.isNotBlank(nameComplete))
             return nameComplete;
+        // Check for ugly cases where name/author contains the complete name
+        if (name != null && author != null) {
+            if (name.endsWith(author)) {
+                return name;
+            }
+            if (author.startsWith(name)) {
+                return author;
+            }
+        }
         StringBuilder ncb = new StringBuilder(64);
         if (name != null)
             ncb.append(name);

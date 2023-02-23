@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -150,9 +151,10 @@ public class TaxonomyBuilder {
             taxonomy.load(sources);
             taxonomy.resolve();
 
-            // Create a working index for use with the taxonomy and then resolve any unplaced vernaculars
+            // Create a working index for use with the taxonomy and then resolve any unplaced vernaculars and references
             taxonomy.createWorkingIndex();
             taxonomy.resolveUnplacedVernacular();
+            taxonomy.resolveUnplacedReferences();
 
             if (samples != null)
                 taxonomy.sample(samples);

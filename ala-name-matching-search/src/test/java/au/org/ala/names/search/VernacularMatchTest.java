@@ -23,6 +23,8 @@ import au.org.ala.names.model.NameSearchResult;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.Set;
+
 import static org.junit.Assert.*;
 
 /**
@@ -40,7 +42,7 @@ public class VernacularMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-3");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
     }
 
     @Test
@@ -247,4 +249,52 @@ public class VernacularMatchTest {
         assertEquals("ALA_DR18234_247", lsid);
     }
 
+    // Check for potentially offsensive names
+    @Test
+    public void testVernacularByLSID1() throws Exception {
+        String lsid = this.searcher.searchForLSID("Girella tricuspidata");
+        String result = this.searcher.getCommonNameForLSID(lsid);
+        assertNotNull(result);
+        assertEquals("Luderick", result);
+    }
+
+    @Test
+    public void testVernacularByLSID2() throws Exception {
+        String lsid = this.searcher.searchForLSID("Xanthorrhoea");
+        String result = this.searcher.getCommonNameForLSID(lsid);
+        assertNotNull(result);
+        assertEquals("Grasstree", result);
+    }
+
+    @Test
+    public void testAllVernacularByLSID1() throws Exception {
+        String lsid = this.searcher.searchForLSID("Girella tricuspidata");
+        Set<String> result = this.searcher.getCommonNamesForLSID(lsid, 100);
+        assertNotNull(result);
+        assertEquals(8, result.size());
+        assertTrue(result.contains("Parore"));
+        assertTrue(result.contains("Black Bream"));
+        assertTrue(result.contains("Luderick"));
+        assertTrue(result.contains("Blackfish"));
+        assertTrue(result.contains("Pacific Bream"));
+        assertTrue(result.contains("Rockperch"));
+        assertTrue(result.contains("Blackbream"));
+        assertTrue(result.contains("Mangrove Fish"));
+    }
+
+    @Test
+    public void testAllVernacularByLSID2() throws Exception {
+        String lsid = this.searcher.searchForLSID("Xanthorrhoea");
+        Set<String> result = this.searcher.getCommonNamesForLSID(lsid, 100);
+        assertNotNull(result);
+        assertEquals(6, result.size());
+        assertTrue(result.contains("Grasstree"));
+        assertTrue(result.contains("Grass-tree"));
+        assertTrue(result.contains("Grasstrees"));
+        assertTrue(result.contains("Grass Tree"));
+        assertTrue(result.contains("Grass-trees"));
+        assertTrue(result.contains("Yacca"));
+    }
+
 }
+

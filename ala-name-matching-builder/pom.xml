@@ -5,7 +5,7 @@
     <parent>
         <groupId>au.org.ala</groupId>
         <artifactId>ala-name-matching</artifactId>
-        <version>4.2</version>
+        <version>4.3</version>
     </parent>
 
     <artifactId>ala-name-matching-builder</artifactId>
@@ -76,4 +76,17 @@
             <version>${commons-cli.version}</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/resources-filtered</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
 </project>

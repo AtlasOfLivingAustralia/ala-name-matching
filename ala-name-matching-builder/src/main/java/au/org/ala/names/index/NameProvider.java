@@ -17,6 +17,7 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.index.provider.*;
+import au.org.ala.names.model.RankType;
 import com.fasterxml.jackson.annotation.*;
 import org.gbif.api.model.registry.Citation;
 import org.gbif.dwc.terms.DcTerm;
@@ -114,6 +115,8 @@ public class NameProvider {
     /** Any spelling corrections needed on authors. */
     @JsonProperty
     private Map<String, String> scientificNameAuthorshipChanges;
+    @JsonProperty
+    private RankType distributionCutoff;
     /** Reporter for any problems */
     @JsonIgnore
     private Reporter reporter;
@@ -139,6 +142,7 @@ public class NameProvider {
         this.authority = true;
         this.scientificNameChanges = new HashMap<>();
         this.scientificNameAuthorshipChanges = new HashMap<>();
+        this.distributionCutoff = null;
         this.reporter = new LogReporter();
     }
     
@@ -161,6 +165,7 @@ public class NameProvider {
         this.unknownTaxonID = unknownTaxonID;
         this.scientificNameChanges = new HashMap<>();
         this.scientificNameAuthorshipChanges = new HashMap<>();
+        this.distributionCutoff = null;
         this.reporter = new LogReporter();
     }
 
@@ -192,6 +197,7 @@ public class NameProvider {
         this.authority = true;
         this.scientificNameChanges = new HashMap<>();
         this.scientificNameAuthorshipChanges = new HashMap<>();
+        this.distributionCutoff = null;
         this.reporter = new LogReporter();
     }
 
@@ -691,6 +697,21 @@ public class NameProvider {
         map.put(DcTerm.rightsHolder, this.getRightsHolder());
         map.put(DcTerm.license, this.getLicence());
         return map;
+    }
+
+    /**
+     * Get the cutoff level for distribution information.
+     * <p>
+     * Distributions for any rank above this one are ignored.
+     * </p>
+     */
+    @JsonIgnore
+    public RankType getDistributionCutoff() {
+        if (this.distributionCutoff != null)
+            return this.distributionCutoff;
+        if (this.parent != null)
+            return this.parent.getDistributionCutoff();
+        return null;
     }
 
     /**

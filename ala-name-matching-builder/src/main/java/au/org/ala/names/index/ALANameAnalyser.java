@@ -26,12 +26,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.gbif.api.exception.UnparsableException;
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.api.service.checklistbank.NameParser;
-import org.gbif.api.vocabulary.NameType;
-import org.gbif.api.vocabulary.NomenclaturalStatus;
-import org.gbif.api.vocabulary.Rank;
+import org.gbif.api.vocabulary.*;
 import org.gbif.checklistbank.authorship.AuthorComparator;
 import org.gbif.checklistbank.utils.SciNameNormalizer;
+import org.gbif.common.parsers.LifeStageParser;
 import org.gbif.common.parsers.NomStatusParser;
+import org.gbif.common.parsers.OccurrenceStatusParser;
 import org.gbif.common.parsers.core.ParseResult;
 import org.gbif.nameparser.PhraseNameParser;
 import org.slf4j.Logger;
@@ -180,11 +180,15 @@ public class ALANameAnalyser extends NameAnalyser {
     private List<Pattern> informalPatterns;
     private NameParser nameParser;
     private NomStatusParser nomStatusParser;
+    private LifeStageParser lifeStageParser;
+    private OccurrenceStatusParser occurrenceStatusParser;
 
     public ALANameAnalyser(AuthorComparator authorComparator, Reporter reporter) {
         super(authorComparator, reporter);
         this.nameParser = new PhraseNameParser();
         this.nomStatusParser = NomStatusParser.getInstance();
+        this.lifeStageParser = LifeStageParser.getInstance();
+        this.occurrenceStatusParser = OccurrenceStatusParser.getInstance();
         this.buildTaxonomicTypeMap();
         this.buildRankMap();
         this.buildNomenclaturalStatusMap();
@@ -237,7 +241,7 @@ public class ALANameAnalyser extends NameAnalyser {
                     rankType = RankType.getForCBRank(name.getRank());
             }
         } catch (UnparsableException ex) {
-            LOGGER.info("Unable to parse " + name + ": " + ex.getMessage());
+            LOGGER.info("Unable to parse " + ex.getMessage());
         }
         if (UNSURE_MARKER.matcher(scientificName).find()) {
             // Leave this well alone but indicate that it is doubtful
@@ -582,6 +586,44 @@ public class ALANameAnalyser extends NameAnalyser {
             }
         }
         return status;
+    }
+
+    /**
+     * Canonicalise the life stage
+     *
+     * @param lifeStage the life stage string
+     *
+     * @return The matching life stage or null for non-matched
+     */
+    @Override
+    public LifeStage canonicaliseLifeStage(String lifeStage) {
+        if (lifeStage == null || lifeStage.isEmpty())
+            return null;
+        ParseResult<LifeStage> result = this.lifeStageParser.parse(lifeStage);
+        if (!result.isSuccessful()) {
+            this.report(IssueType.VALIDATION, "taxonomy.load.lifeStage.invalid", lifeStage, "");
+            return null;
+        }
+        return result.getPayload();
+    }
+
+    /**
+     * Canonicalise the occurrence status
+     *
+     * @param occurrenceStatus the occurrence status string
+     *
+     * @return The occurrence status or null for non-matched
+     */
+    @Override
+    public OccurrenceStatus canonicaliseOccurrenceStatus(String occurrenceStatus) {
+        if (occurrenceStatus == null || occurrenceStatus.isEmpty())
+            return null;
+        ParseResult<OccurrenceStatus> result = this.occurrenceStatusParser.parse(occurrenceStatus);
+        if (!result.isSuccessful()) {
+            this.report(IssueType.VALIDATION, "taxonomy.load.occurrenceStatus.invalid", occurrenceStatus, "");
+            return null;
+        }
+        return result.getPayload();
     }
 
     /**

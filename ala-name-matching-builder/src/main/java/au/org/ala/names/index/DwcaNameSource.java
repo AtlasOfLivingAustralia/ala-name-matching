@@ -87,6 +87,16 @@ public class DwcaNameSource extends NameSource {
     }
 
     /**
+     * Get the type of core row this source represents
+     *
+     * @return The core type from the archive
+     */
+    @Override
+    public Term getCoreType() {
+        return this.archive.getCore().getRowType();
+    }
+
+    /**
      * Get a citation for this source.
      *
      * @return The citation
@@ -186,27 +196,34 @@ public class DwcaNameSource extends NameSource {
      */
     @Override
     public void loadIntoTaxonomy(Taxonomy taxonomy) throws IndexBuilderException {
-         if (archive.getCore().getRowType() == DwcTerm.Taxon)
+        Term coreType = this.getCoreType();
+        if (coreType == DwcTerm.Taxon)
             this.loadTaxonDwCA(taxonomy);
-        else if (archive.getCore().getRowType() == GbifTerm.VernacularName)
-            this.loadVernacularDwCA(taxonomy);
-        else
-            throw new IndexBuilderException("Unable to load from archive of type " + archive.getCore().getRowType());
-     }
-
+        else if (coreType == GbifTerm.VernacularName)
+            this.loadNonTaxonDwCA(taxonomy, ALATerm.UnplacedVernacularName);
+        else if (coreType == GbifTerm.Reference)
+            this.loadNonTaxonDwCA(taxonomy, ALATerm.UnplacedReference);
+        else if (coreType == ALATerm.Location)
+            this.loadLocationDwCA(taxonomy);
+        else {
+            taxonomy.report(IssueType.PROBLEM, "taxonomy.load.rowType.discard", coreType.qualifiedName(), this.archive.getLocation().getPath());
+        }
+    }
+    
     /**
-     * Load a vernacular DwCA.
+     * Load a non-taxon DwCA.
      * <p>
-     * This is often a DwCA with "free-floating" vernacular names, usually keyed to a scientific name or classification.
+     * This is often a DwCA with "free-floating" vernacular names or references, usually keyed to a scientific name or classification.
      * Unless they have a specific taxonID, they will, eventually, be linked to the most likely taxon.
      * </p>
      *
      * @param taxonomy The taxonomy
+     * @param unplacedClass The class to use to indicate an unplaced element
      *
      * @throws IndexBuilderException if unable to load a record into the taxonomy.
      */
-    public void loadVernacularDwCA(Taxonomy taxonomy) throws IndexBuilderException {
-        taxonomy.addOutputTerms(archive.getCore().getRowType(), archive.getCore().getTerms());
+    public void loadNonTaxonDwCA(Taxonomy taxonomy, Term unplacedClass) throws IndexBuilderException {
+        taxonomy.addOutputTerms(this.archive.getCore().getRowType(), this.archive.getCore().getTerms());
         String taxonID = null;
         Term type = null;
         for (ArchiveFile ext: archive.getExtensions())
@@ -218,11 +235,11 @@ public class DwcaNameSource extends NameSource {
                 type = core.rowType();
                 if (taxonID == null) {
                     taxonID = UUID.randomUUID().toString();
-                    type = ALATerm.UnplacedVernacularName;
+                    type = unplacedClass;
                 }
                 List<Document> docs = new ArrayList<>();
                 docs.add(this.makeDocument(taxonomy, type, core, taxonID));
-                if (type != ALATerm.UnplacedVernacularName)
+                if (type != unplacedClass)
                     addPseudoTaxon(taxonomy, core, taxonID, null);
                 for (List<Record> ext: record.extensions().values()) {
                     for (Record er: ext) {
@@ -235,7 +252,7 @@ public class DwcaNameSource extends NameSource {
             throw new IndexBuilderException("Unable to load archive " + this.archive.getLocation() + " at taxon " + taxonID, ex);
         }
     }
-
+    
     /**
      * Load ta taxon DwCA into a taxonomy.
      *
@@ -244,6 +261,7 @@ public class DwcaNameSource extends NameSource {
      * @throws IndexBuilderException if unable to load a record into the taxonomy.
      */
     protected void loadTaxonDwCA(Taxonomy taxonomy) throws IndexBuilderException {
+        Term coreType = this.getCoreType();
         String defaultDatasetName = null;
         int line = 0;
         try {
@@ -251,10 +269,10 @@ public class DwcaNameSource extends NameSource {
         } catch (MetadataException e) {
             taxonomy.report(IssueType.PROBLEM, "provider.archive.noMetadata", (String) null, null);
         }
-        if (archive.getCore().getRowType() != DwcTerm.Taxon)
+        if (coreType != DwcTerm.Taxon)
             throw new IndexBuilderException("Expecting a core row type of " + DwcTerm.Taxon);
         List<Term> classifiers = TaxonConceptInstance.CLASSIFICATION_FIELDS.stream().filter(t -> archive.getCore().hasTerm(t)).collect(Collectors.toList());
-        taxonomy.addOutputTerms(archive.getCore().getRowType(), archive.getCore().getTerms());
+        taxonomy.addOutputTerms(coreType, archive.getCore().getTerms());
         taxonomy.addOutputTerms(ALATerm.TaxonVariant, archive.getCore().getTerms());
         String taxonID = null;
         for (ArchiveFile ext: archive.getExtensions())
@@ -299,6 +317,10 @@ public class DwcaNameSource extends NameSource {
                 List<String> provenance = verbatimProvenance == null || verbatimProvenance.isEmpty() ? null : Arrays.stream(verbatimProvenance.split("\\|")).map(s -> s.trim()).collect(Collectors.toList());
                 Set<TaxonFlag> flags = taxonomy.resolveTaxonomicFlags(taxonomicFlags);
                 Map<Term, Optional<String>> classification = classifiers.stream().collect(Collectors.toMap(t -> t, t -> Optional.ofNullable(core.value(t))));
+                List<Distribution> distribution = null;
+                if (record.hasExtension(GbifTerm.Distribution)) {
+                    distribution = record.extension(GbifTerm.Distribution).stream().map(r -> new Distribution(taxonomy, r)).collect(Collectors.toList());
+                }
                 TaxonConceptInstance instance = new TaxonConceptInstance(
                         taxonID,
                         code,
@@ -322,15 +344,21 @@ public class DwcaNameSource extends NameSource {
                         verbatimTaxonRemarks,
                         provenance,
                         classification,
-                        flags);
+                        flags,
+                        distribution);
                 instance = taxonomy.addInstance(instance);
 
                 List<Document> docs = new ArrayList<>();
                 docs.add(this.makeDocument(taxonomy, core.rowType(), core, instance.getTaxonID()));
                 for (List<Record> ext: record.extensions().values()) {
                     for (Record er: ext) {
-                        addPseudoTaxon(taxonomy, er, instance.getTaxonID(), code);
-                        docs.add(makeDocument(taxonomy, er.rowType(), er, instance.getTaxonID()));
+                        if (this.acceptExtensionRecord(instance, er)) {
+                            addPseudoTaxon(taxonomy, er, instance.getTaxonID(), code);
+                            docs.add(makeDocument(taxonomy, er.rowType(), er, instance.getTaxonID()));
+                        } else {
+                            taxonomy.report(IssueType.NOTE, "taxonomy.load.extension.discard", taxonID, scientificName, er.rowType().simpleName());
+                            taxonomy.count("count.load.extension." + er.rowType().simpleName() + ".discarded");
+                        }
                     }
                 }
                 taxonomy.addRecords(docs);
@@ -385,11 +413,61 @@ public class DwcaNameSource extends NameSource {
                         null,
                         null,
                         null,
+                        null,
                         null
                 );
                 taxonomy.addInstance(psuedo);
             }
         }
+    }
+
+    /**
+     * Load a location DwCA.
+     * <p>
+     * This models the location information available
+     * </p>
+     *
+     * @param taxonomy The taxonomy
+     *
+     * @throws IndexBuilderException if unable to load a record into the taxonomy.
+     */
+    public void loadLocationDwCA(Taxonomy taxonomy) throws IndexBuilderException {
+        Term coreType = this.getCoreType();
+        taxonomy.addOutputTerms(coreType, archive.getCore().getTerms());
+        String taxonID = null;
+        try {
+            for (StarRecord record : this.archive) {
+                Record core = record.core();
+                String locationID = core.value(DwcTerm.locationID);
+                String parentLocationID = core.value(ALATerm.parentLocationID);
+                String locality = core.value(DwcTerm.locality);
+                String geographyType = core.value(ALATerm.geographyType);
+                Location location = new Location(locationID, parentLocationID, locality, parentLocationID);
+                taxonomy.addLocation(location);
+            }
+        } catch (Exception ex) {
+            throw new IndexBuilderException("Unable to load archive " + this.archive.getLocation() + " at taxon " + taxonID, ex);
+        }
+    }
+
+
+    /**
+     * Decide whether to include an extension record.
+     * <p>
+     * If the record is a distribution record then it is included in the taxon
+     * concept instance and is discarded.
+     * </p>
+     *
+     * @param instance The taxon concept instance
+     * @param er The extension record
+     *
+     * @return True to include the record, false if the record is to be discarded.
+     */
+    protected boolean acceptExtensionRecord(TaxonConceptInstance instance, Record er) {
+        if (er.rowType() == GbifTerm.Distribution) {
+            return false;
+        }
+        return true;
     }
 
     /**

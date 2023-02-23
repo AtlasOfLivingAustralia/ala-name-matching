@@ -1,0 +1,59 @@
+taxonID	identifier	datasetID	title	status	source	taxonRemarks	provenance	taxonID
+https://id.biodiversity.org.au/taxon/apni/51414459	http://id.biodiversity.org.au/taxon/apni/51414459	dr5214	Taxon	variant				https://id.biodiversity.org.au/taxon/apni/51414459
+https://id.biodiversity.org.au/taxon/apni/51414459	https://id.biodiversity.org.au/taxon/apni/51414459	dr5214	Taxon	current	https://id.biodiversity.org.au/taxon/apni/51414459			
+https://id.biodiversity.org.au/taxon/apni/51414459	https://id.biodiversity.org.au/name/apni/54717	dr5214	Scientific Name	current	https://id.biodiversity.org.au/taxon/apni/51414459			
+https://id.biodiversity.org.au/taxon/apni/51414459	https://id.biodiversity.org.au/instance/apni/738442	dr5214	Taxon Concept	current	https://id.biodiversity.org.au/taxon/apni/51414459			
+https://id.biodiversity.org.au/taxon/apni/51414459	NZOR-6-60501	dr2707	Taxon	current	http://data.nzor.org.nz/names/3ead4965-50d6-4373-a616-240cc151c611			
+https://id.biodiversity.org.au/taxon/apni/51414459	http://data.nzor.org.nz/names/3ead4965-50d6-4373-a616-240cc151c611	dr2707	Scientific Name	current	http://data.nzor.org.nz/names/3ead4965-50d6-4373-a616-240cc151c611			
+https://id.biodiversity.org.au/taxon/apni/51414459	http://id.biodiversity.org.au/taxon/ausmoss/10146063	dr2703	Taxon	variant				https://id.biodiversity.org.au/taxon/ausmoss/10146063
+https://id.biodiversity.org.au/taxon/apni/51414459	https://id.biodiversity.org.au/taxon/ausmoss/10146063	dr2703	Taxon	current	https://id.biodiversity.org.au/taxon/ausmoss/10146063			
+https://id.biodiversity.org.au/taxon/apni/51414459	https://id.biodiversity.org.au/name/ausmoss/10001168	dr2703	Scientific Name	current	https://id.biodiversity.org.au/taxon/ausmoss/10146063			
+https://id.biodiversity.org.au/taxon/apni/51414459	https://id.biodiversity.org.au/instance/ausmoss/10018100	dr2703	Taxon Concept	current	https://id.biodiversity.org.au/taxon/ausmoss/10146063			
+https://id.biodiversity.org.au/taxon/apni/51414458	http://id.biodiversity.org.au/taxon/apni/51414458	dr5214	Taxon	variant				https://id.biodiversity.org.au/taxon/apni/51414458
+https://id.biodiversity.org.au/taxon/apni/51414458	https://id.biodiversity.org.au/taxon/apni/51414458	dr5214	Taxon	current	https://id.biodiversity.org.au/taxon/apni/51414458			
+https://id.biodiversity.org.au/taxon/apni/51414458	https://id.biodiversity.org.au/name/apni/224706	dr5214	Scientific Name	current	https://id.biodiversity.org.au/taxon/apni/51414458			
+https://id.biodiversity.org.au/taxon/apni/51414458	https://id.biodiversity.org.au/instance/apni/654810	dr5214	Taxon Concept	current	https://id.biodiversity.org.au/taxon/apni/51414458			
+https://id.biodiversity.org.au/taxon/apni/51414458	NZOR-6-73331	dr2707	Taxon	current	http://data.nzor.org.nz/names/394115df-6404-4040-8411-95c8b8126902			
+https://id.biodiversity.org.au/taxon/apni/51414458	http://data.nzor.org.nz/names/394115df-6404-4040-8411-95c8b8126902	dr2707	Scientific Name	current	http://data.nzor.org.nz/names/394115df-6404-4040-8411-95c8b8126902			
+https://id.biodiversity.org.au/taxon/apni/51414457	NZOR-6-113494	dr2707	Taxon	current	http://data.nzor.org.nz/names/47c22b52-d9bb-4277-ae11-7818b1b4ff4b			
+https://id.biodiversity.org.au/taxon/apni/51414457	http://data.nzor.org.nz/names/47c22b52-d9bb-4277-ae11-7818b1b4ff4b	dr2707	Scientific Name	current	http://data.nzor.org.nz/names/47c22b52-d9bb-4277-ae11-7818b1b4ff4b			
+https://id.biodiversity.org.au/taxon/apni/51414457	http://id.biodiversity.org.au/taxon/apni/51414457	dr5214	Taxon	variant				https://id.biodiversity.org.au/taxon/apni/51414457
+https://id.biodiversity.org.au/taxon/apni/51414457	https://id.biodiversity.org.au/taxon/apni/51414457	dr5214	Taxon	current	https://id.biodiversity.org.au/taxon/apni/51414457			
+https://id.biodiversity.org.au/taxon/apni/51414457	https://id.biodiversity.org.au/name/apni/223519	dr5214	Scientific Name	current	https://id.biodiversity.org.au/taxon/apni/51414457			
+https://id.biodiversity.org.au/taxon/apni/51414457	https://id.biodiversity.org.au/instance/apni/653303	dr5214	Taxon Concept	current	https://id.biodiversity.org.au/taxon/apni/51414457			
+https://id.biodiversity.org.au/taxon/apni/51414456	NZOR-6-15378	dr2707	Taxon	current	http://data.nzor.org.nz/names/0ba9ac9c-59d3-4eb3-a881-72e9089541b0			
+https://id.biodiversity.org.au/taxon/apni/51414456	http://data.nzor.org.nz/names/0ba9ac9c-59d3-4eb3-a881-72e9089541b0	dr2707	Scientific Name	current	http://data.nzor.org.nz/names/0ba9ac9c-59d3-4eb3-a881-72e9089541b0			
+https://id.biodiversity.org.au/taxon/apni/51414456	http://id.biodiversity.org.au/taxon/apni/51414456	dr5214	Taxon	variant				https://id.biodiversity.org.au/taxon/apni/51414456
+https://id.biodiversity.org.au/taxon/apni/51414456	https://id.biodiversity.org.au/taxon/apni/51414456	dr5214	Taxon	current	https://id.biodiversity.org.au/taxon/apni/51414456			
+https://id.biodiversity.org.au/taxon/apni/51414456	https://id.biodiversity.org.au/name/apni/214954	dr5214	Scientific Name	current	https://id.biodiversity.org.au/taxon/apni/51414456			
+https://id.biodiversity.org.au/taxon/apni/51414456	https://id.biodiversity.org.au/instance/apni/655769	dr5214	Taxon Concept	current	https://id.biodiversity.org.au/taxon/apni/51414456			
+https://id.biodiversity.org.au/taxon/apni/51414455	http://id.biodiversity.org.au/taxon/apni/51414455	dr5214	Taxon	variant				https://id.biodiversity.org.au/taxon/apni/51414455
+https://id.biodiversity.org.au/taxon/apni/51414455	https://id.biodiversity.org.au/taxon/apni/51414455	dr5214	Taxon	current	https://id.biodiversity.org.au/taxon/apni/51414455			
+https://id.biodiversity.org.au/taxon/apni/51414455	https://id.biodiversity.org.au/name/apni/216053	dr5214	Scientific Name	current	https://id.biodiversity.org.au/taxon/apni/51414455			
+https://id.biodiversity.org.au/taxon/apni/51414455	https://id.biodiversity.org.au/instance/apni/653389	dr5214	Taxon Concept	current	https://id.biodiversity.org.au/taxon/apni/51414455			
+https://id.biodiversity.org.au/taxon/apni/51414454	http://id.biodiversity.org.au/taxon/apni/51414454	dr5214	Taxon	variant				https://id.biodiversity.org.au/taxon/apni/51414454
+https://id.biodiversity.org.au/taxon/apni/51414454	https://id.biodiversity.org.au/taxon/apni/51414454	dr5214	Taxon	current	https://id.biodiversity.org.au/taxon/apni/51414454			
+https://id.biodiversity.org.au/taxon/apni/51414454	https://id.biodiversity.org.au/name/apni/214968	dr5214	Scientific Name	current	https://id.biodiversity.org.au/taxon/apni/51414454			
+https://id.biodiversity.org.au/taxon/apni/51414454	https://id.biodiversity.org.au/instance/apni/653402	dr5214	Taxon Concept	current	https://id.biodiversity.org.au/taxon/apni/51414454			
+https://id.biodiversity.org.au/taxon/apni/51414454	NZOR-6-129381	dr2707	Taxon	current	http://data.nzor.org.nz/names/4924659a-9c26-4eda-b42d-5c7cd7f8bd5c			
+https://id.biodiversity.org.au/taxon/apni/51414454	http://data.nzor.org.nz/names/4924659a-9c26-4eda-b42d-5c7cd7f8bd5c	dr2707	Scientific Name	current	http://data.nzor.org.nz/names/4924659a-9c26-4eda-b42d-5c7cd7f8bd5c			
+https://id.biodiversity.org.au/taxon/apni/51414453	http://id.biodiversity.org.au/taxon/apni/51414453	dr5214	Taxon	variant				https://id.biodiversity.org.au/taxon/apni/51414453
+https://id.biodiversity.org.au/taxon/apni/51414453	https://id.biodiversity.org.au/taxon/apni/51414453	dr5214	Taxon	current	https://id.biodiversity.org.au/taxon/apni/51414453			
+https://id.biodiversity.org.au/taxon/apni/51414453	https://id.biodiversity.org.au/name/apni/54444	dr5214	Scientific Name	current	https://id.biodiversity.org.au/taxon/apni/51414453			
+https://id.biodiversity.org.au/taxon/apni/51414453	https://id.biodiversity.org.au/instance/apni/650717	dr5214	Taxon Concept	current	https://id.biodiversity.org.au/taxon/apni/51414453			
+https://id.biodiversity.org.au/taxon/apni/51414453	NZOR-6-80578	dr2707	Taxon	current	http://data.nzor.org.nz/names/f0c1993e-e036-4074-bdae-936c9854ef2b			
+https://id.biodiversity.org.au/taxon/apni/51414453	http://data.nzor.org.nz/names/f0c1993e-e036-4074-bdae-936c9854ef2b	dr2707	Scientific Name	current	http://data.nzor.org.nz/names/f0c1993e-e036-4074-bdae-936c9854ef2b			
+https://id.biodiversity.org.au/taxon/apni/51414453	ALA_DR493_570	dr493	Taxon	current	https://lists.ala.org.au/speciesListItem/list/dr493?q=Orchidaceae			
+https://id.biodiversity.org.au/taxon/apni/51398751	http://id.biodiversity.org.au/taxon/apni/51398751	dr5214	Taxon	variant				https://id.biodiversity.org.au/taxon/apni/51398751
+https://id.biodiversity.org.au/taxon/apni/51398751	https://id.biodiversity.org.au/taxon/apni/51398751	dr5214	Taxon	current	https://id.biodiversity.org.au/taxon/apni/51398751			
+https://id.biodiversity.org.au/taxon/apni/51398751	https://id.biodiversity.org.au/name/apni/90466	dr5214	Scientific Name	current	https://id.biodiversity.org.au/taxon/apni/51398751			
+https://id.biodiversity.org.au/taxon/apni/51398751	http://id.biodiversity.org.au/instance/apni/51396924	dr5214	Taxon Concept	current	https://id.biodiversity.org.au/taxon/apni/51398751			
+https://id.biodiversity.org.au/taxon/apni/51398751	NZOR-6-52822	dr2707	Taxon	current	http://data.nzor.org.nz/names/c69163b1-1539-4709-af71-8d3be633af38			
+https://id.biodiversity.org.au/taxon/apni/51398751	http://data.nzor.org.nz/names/c69163b1-1539-4709-af71-8d3be633af38	dr2707	Scientific Name	current	http://data.nzor.org.nz/names/c69163b1-1539-4709-af71-8d3be633af38			
+https://id.biodiversity.org.au/taxon/apni/51398751	ALA_DR493_210	dr493	Taxon	current	https://lists.ala.org.au/speciesListItem/list/dr493?q=Caladenia			
+https://id.biodiversity.org.au/taxon/apni/51398946	http://id.biodiversity.org.au/taxon/apni/51398946	dr5214	Taxon	variant				https://id.biodiversity.org.au/taxon/apni/51398946
+https://id.biodiversity.org.au/taxon/apni/51398946	https://id.biodiversity.org.au/taxon/apni/51398946	dr5214	Taxon	current	https://id.biodiversity.org.au/taxon/apni/51398946			
+https://id.biodiversity.org.au/taxon/apni/51398946	https://id.biodiversity.org.au/name/apni/91110	dr5214	Scientific Name	current	https://id.biodiversity.org.au/taxon/apni/51398946			
+https://id.biodiversity.org.au/taxon/apni/51398946	http://id.biodiversity.org.au/instance/apni/51397404	dr5214	Taxon Concept	current	https://id.biodiversity.org.au/taxon/apni/51398946			
+https://id.biodiversity.org.au/taxon/apni/51398946	ALA_DR653_1039	dr653	Taxon	current	https://lists.ala.org.au/speciesListItem/list/dr653?q=Caladenia+dilatata			
+https://id.biodiversity.org.au/taxon/apni/51398946	ALA_DR493_218	dr493	Taxon	current	https://lists.ala.org.au/speciesListItem/list/dr493?q=Caladenia+dilatata			

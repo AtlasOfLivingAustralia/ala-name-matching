@@ -34,7 +34,7 @@ public class AutocompleteTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-3");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
     }
 
     @Test
@@ -132,7 +132,7 @@ public class AutocompleteTest {
         assertNotNull(results);
         assertTrue(results.size() > 0);
         assertTrue(results.stream().anyMatch(r -> "Iliocirrus rossi".equals(r.get("name"))));
-        assertTrue(results.stream().anyMatch(r -> "Rossiteria nuclea".equals(r.get("name"))));
+        assertTrue(results.stream().anyMatch(r -> "Natatolana rossi".equals(r.get("name"))));
     }
 
 

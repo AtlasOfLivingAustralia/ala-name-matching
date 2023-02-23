@@ -88,4 +88,18 @@ abstract public interface TaxonResolver {
      * @throws IndexBuilderException if there is an error in reallocation
      */
     public void reallocateSecondaryConcepts(ScientificName scientificName, Taxonomy taxonomy) throws IndexBuilderException;
+
+    /**
+     * Resolve the distribution information for a concept.
+     *
+     * @param concept The concept
+     * @param resolution The resolution
+     * @param taxonomy The taxonomy
+     *
+     * @return The compiled list of distributions
+     *
+     * @throws IndexBuilderException if unable to resolve the distribution
+     */
+    public void resolveDistribution(TaxonConcept concept, TaxonResolution resolution, Taxonomy taxonomy) throws IndexBuilderException;
+
 }

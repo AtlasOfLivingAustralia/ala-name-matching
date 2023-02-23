@@ -44,6 +44,7 @@ import org.gbif.api.vocabulary.*;
 import org.gbif.checklistbank.authorship.AuthorComparator;
 import org.gbif.dwc.terms.*;
 import org.gbif.dwc.terms.Term;
+import org.gbif.dwca.record.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,10 +92,10 @@ public class Taxonomy implements Reporter {
     ));
 
     /**
-     * Terms not to copy from an unplaced vernacular entry, usually because they
+     * Terms not to copy from an unplaced vernacular or reference entry, usually because they
      * should come from the attached taxon.
      */
-    protected static final List<String> UNPLACED_VERNACULAR_FORBIDDEN = Arrays.asList(
+    protected static final List<String> UNPLACED_FORBIDDEN = Arrays.asList(
             "type",
             "id",
             fieldName(DwcTerm.taxonID),
@@ -120,6 +121,27 @@ public class Taxonomy implements Reporter {
             DwcTerm.taxonID
     ));
 
+
+    /**
+     * The order in which to load sources
+     */
+    protected static final List<Term> LOAD_ORDER = Arrays.asList(
+            ALATerm.Location,
+            DwcTerm.Taxon,
+            GbifTerm.VernacularName,
+            GbifTerm.Distribution
+    );
+
+    /**
+     * The source comparator
+     */
+    public Comparator<NameSource> LOAD_COMPARATOR = (s1, s2) -> {
+        int t1 = LOAD_ORDER.indexOf(s1.getCoreType());
+        int t2 = LOAD_ORDER.indexOf(s2.getCoreType());
+        t1 = t1 < 0 ? LOAD_ORDER.size() : t1;
+        t2 = t2 < 0 ? LOAD_ORDER.size() : t2;
+        return t1 - t2;
+    };
 
 
     /** The configuration */
@@ -162,6 +184,8 @@ public class Taxonomy implements Reporter {
     private ALANameSearcher workingIndex;
     /** Optional sample set of concepts to output */
     private Set<TaxonConcept> sample;
+    /** The location map */
+    private Map<String, Location> locations;
 
     /**
      * Default taxonomy constructor.
@@ -220,6 +244,7 @@ public class Taxonomy implements Reporter {
         this.counts = new ConcurrentHashMap<>();
         this.sources = new ArrayList<>();
         this.sample = null;
+        this.locations = new HashMap<>();
     }
 
     /**
@@ -248,6 +273,7 @@ public class Taxonomy implements Reporter {
         this.counts = new ConcurrentHashMap<>();
         this.sources = new ArrayList<>();
         this.sample = null;
+        this.locations = new HashMap<>();
     }
 
     /**
@@ -406,6 +432,8 @@ public class Taxonomy implements Reporter {
      * @throws IndexBuilderException
      */
     public void load(List<NameSource> sources) throws IndexBuilderException {
+        // Sort into load order so that reference information loads first
+        sources.sort(LOAD_COMPARATOR);
         try {
             if (this.indexWriter == null)
                 throw new IllegalStateException("Index not opened");
@@ -422,6 +450,27 @@ public class Taxonomy implements Reporter {
     }
 
     /**
+     * Resolve the location list
+     */
+    public void resolveLocations() {
+        for (Location loc: this.locations.values()) {
+            loc.resolve(this.locations);
+            this.count("count.location.resolve");
+        }
+    }
+
+
+    /**
+     * Resolve the distributions
+     */
+    public void resolveDistributions() {
+        logger.info("Resolving distributions");
+        Set<TaxonConcept> concepts = this.instances.values().stream().map(TaxonConceptInstance::getContainer).collect(Collectors.toSet());
+        concepts.parallelStream().forEach(tc -> tc.resolveDistribution(this));
+        logger.info("Finished resolving distributions");
+    }
+
+    /**
      * Resolve everything.
      * <ul>
      *     <li>First ensure that the tree is linked together.</li>
@@ -429,9 +478,11 @@ public class Taxonomy implements Reporter {
      * </ul>
      */
     public void resolve() throws Exception {
+        this.resolveLocations();
         this.provideUnknownTaxon();
         this.resolveLinks();
         this.resolveLoops();
+        this.resolveInvalidParents();
         if (!this.validate())
             throw new IndexBuilderException("Invalid source data");
         this.computeScores();
@@ -443,6 +494,7 @@ public class Taxonomy implements Reporter {
         this.resolveDiscards();
         if (!this.validate())
             throw new IndexBuilderException("Invalid resolution");
+        this.resolveDistributions();
         this.validateSpeciesSpelling();
     }
 
@@ -477,6 +529,7 @@ public class Taxonomy implements Reporter {
                     null,
                     null,
                     Arrays.asList(taxonRemarks),
+                    null,
                     null,
                     null,
                     null,
@@ -645,6 +698,22 @@ public class Taxonomy implements Reporter {
 
 
     /**
+     * Resolve taxa with invalid parents.
+     * <p>
+     * Look for instances where there is an internal loop in the taxonomy, using the provided links.
+     * </p>
+     *
+     * @throws IndexBuilderException
+     */
+    public void resolveInvalidParents() throws IndexBuilderException {
+        logger.info("Resolving invalid parents");
+        Set<TaxonConceptInstance> invalidParents = this.instances.values().parallelStream().filter(TaxonConceptInstance::hasInvalidParent).collect(Collectors.toSet());
+        invalidParents.parallelStream().forEach(tci -> tci.resolveInvalidParent(this));
+        logger.info("Finished resolving invalid parents");
+    }
+
+
+    /**
      * Resolve the preferred instance associated with a taxon concept
      * and the preferred taxon concept associated with a name.
      * <p>
@@ -788,7 +857,7 @@ public class Taxonomy implements Reporter {
             IndexSearcher searcher = this.searcherManager.acquire();
             try {
                 ScoreDoc after = null;
-                TopDocs docs = searcher.search(query, 100, Sort.INDEXORDER);
+                TopDocs docs = searcher.searchAfter(after, query, 100, Sort.INDEXORDER);
                 while (docs.scoreDocs.length > 0) {
                     for (ScoreDoc sd : docs.scoreDocs) {
                         after = sd;
@@ -811,7 +880,7 @@ public class Taxonomy implements Reporter {
                             placed.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
                             placed.add(new StringField(fieldName(DwcTerm.taxonID), concept.getRepresentative().getTaxonID(), Field.Store.YES));
                             for (IndexableField field : document) {
-                                if (!UNPLACED_VERNACULAR_FORBIDDEN.contains(field.name())) {
+                                if (!UNPLACED_FORBIDDEN.contains(field.name())) {
                                     placed.add(field);
                                 }
                             }
@@ -832,6 +901,75 @@ public class Taxonomy implements Reporter {
             throw new IndexBuilderException("Unable to search for unplaced vernacular names", ex);
         }
 
+    }
+
+
+    /**
+     * Resolve any unplaced references names.
+     * <p>
+     * A new vernacular name is added with the correct taxon ID and other information as supplied.
+     * </p>
+     * <p>
+     * There must be a working index set at this point, so that names can be found.
+     * See {@link #setWorkingIndex(ALANameSearcher)}
+     * </p>
+     *
+     * @throws IndexBuilderException
+     */
+    public void resolveUnplacedReferences() throws IndexBuilderException {
+        logger.info("Resolving unplaced references");
+        if (this.workingIndex == null)
+            throw new IndexBuilderException("No working name index set");
+        try {
+            BooleanQuery.Builder builder = new BooleanQuery.Builder();
+            builder.add(new TermQuery(new org.apache.lucene.index.Term("type", ALATerm.UnplacedReference.qualifiedName())), BooleanClause.Occur.MUST);
+            BooleanQuery query = builder.build();
+            IndexSearcher searcher = this.searcherManager.acquire();
+            try {
+                ScoreDoc after = null;
+                TopDocs docs = searcher.searchAfter(after, query, 100, Sort.INDEXORDER);
+                while (docs.scoreDocs.length > 0) {
+                    for (ScoreDoc sd : docs.scoreDocs) {
+                        after = sd;
+                        Document document = searcher.doc(sd.doc);
+                        TaxonConceptInstance tci = null;
+                        String taxonID = document.get(fieldName(DwcTerm.taxonID));
+                        String identifier = document.get(fieldName(DcTerm.identifier));
+                        if (taxonID != null)
+                            tci = this.instances.get(taxonID);
+                        if (tci == null)
+                            tci = this.search(document);
+                        TaxonConcept concept = tci == null ? null : tci.getContainer();
+                        if (concept == null) {
+                            String scientificName = document.get(fieldName(DwcTerm.scientificName));
+                            this.report(IssueType.PROBLEM, "reference.unplaced", null, scientificName, identifier);
+                            this.count("count.reference.unplaced");
+                        } else {
+                            Document placed = new Document();
+                            placed.add(new StringField("type", GbifTerm.Reference.qualifiedName(), Field.Store.YES));
+                            placed.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
+                            placed.add(new StringField(fieldName(DwcTerm.taxonID), concept.getRepresentative().getTaxonID(), Field.Store.YES));
+                            for (IndexableField field : document) {
+                                if (!UNPLACED_FORBIDDEN.contains(field.name())) {
+                                    placed.add(field);
+                                }
+                            }
+                            this.indexWriter.addDocument(placed);
+                        }
+                    }
+                    this.indexWriter.commit();
+                    docs = searcher.searchAfter(after, query, 100, Sort.INDEXORDER);
+                }
+            } finally {
+                this.searcherManager.release(searcher);
+                this.searcherManager.maybeRefresh();
+            }
+            logger.info("Finished resolving unplaced references");
+        } catch (IndexBuilderException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new IndexBuilderException("Unable to search for unplaced references", ex);
+        }
     }
 
     /**
@@ -937,7 +1075,6 @@ public class Taxonomy implements Reporter {
                 .collect(Collectors.toSet());
     }
 
-
     /**
      * Get an ALA rank type for a rank
      *
@@ -973,6 +1110,40 @@ public class Taxonomy implements Reporter {
         }
         return status.isEmpty() ? null : status;
     }
+
+    /**
+     * Get a location for a location identifier or name
+     *
+     * @param location The location ID
+     *
+     * @return The location
+     */
+    public Location resolveLocation(String location) {
+        return this.locations.get(location);
+    }
+
+    /**
+     * Get an GBIF life stage for a life stage
+     *
+     * @param lifeStage The lifestage
+     *
+     * @return The mapped life stage
+     */
+    public LifeStage resolveLifeStage(String lifeStage) {
+        return this.analyser.canonicaliseLifeStage(lifeStage);
+    }
+
+    /**
+     * Get an GBIF occurrence status for an occurrence status
+     *
+     * @param occurrenceStatus The occurrence status
+     *
+     * @return The mapped occurrence status
+     */
+    public OccurrenceStatus resolveOccurrenceStatus(String occurrenceStatus) {
+        return this.analyser.canonicaliseOccurrenceStatus(occurrenceStatus);
+    }
+
 
     /**
      * Add an inferred instance.
@@ -1098,7 +1269,8 @@ public class Taxonomy implements Reporter {
                     instance.getVerbatimTaxonRemarks(),
                     instance.getProvenance() == null ? null : new ArrayList<>(instance.getProvenance()),
                     instance.getClassification(),
-                    instance.getFlags()
+                    instance.getFlags(),
+                    instance.getDistribution()
             );
             instance.addProvenance(remark);
             this.addProvenanceToOutput();
@@ -1137,6 +1309,19 @@ public class Taxonomy implements Reporter {
         if (!this.unrankedNames.containsKey(unrankedKey))
             this.unrankedNames.put(unrankedKey, unranked);
         this.instances.put(taxonID, instance);
+    }
+
+    /**
+     * Add a new location to the location map.
+     *
+     * @param location The location to add
+     *
+     * @throws IndexBuilderException if unable to add the location
+     */
+    public void addLocation(Location location) {
+        if (this.locations.containsKey(location.getLocationID()))
+            throw new IndexBuilderException("Location identifier " + location.getLocationID() + " is already in use");
+        this.locations.put(location.getLocationID(), location);
     }
 
     /**
@@ -1287,6 +1472,13 @@ public class Taxonomy implements Reporter {
         }
         switch (type) {
             case ERROR:
+                // Print location of error for debugging
+                try {
+                    throw new IllegalStateException(message);
+                } catch (Exception ex) {
+                    logger.error(message, ex);
+                }
+                break;
             case VALIDATION:
                 logger.error(message);
                 break;
@@ -1544,7 +1736,7 @@ public class Taxonomy implements Reporter {
             indexer.createIrmng(null);
             indexer.commit();
         } catch (Exception ex) {
-            throw new IndexBuilderException("Unable to build working index");
+            throw new IndexBuilderException("Unable to build working index", ex);
         } finally {
             this.searcherManager.maybeRefresh();
         }

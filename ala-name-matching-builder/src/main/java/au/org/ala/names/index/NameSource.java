@@ -78,6 +78,7 @@ abstract public class NameSource {
             DwcTerm.namePublishedIn,
             DwcTerm.namePublishedInYear,
             DcTerm.source,
+            ALATerm.doi,
             DwcTerm.taxonRemarks,
             DcTerm.provenance,
             ALATerm.taxonomicFlags
@@ -109,6 +110,7 @@ abstract public class NameSource {
             DcTerm.format,
             ALATerm.status,
             DcTerm.source,
+            ALATerm.doi,
             DwcTerm.taxonRemarks,
             DcTerm.provenance
     );
@@ -135,6 +137,7 @@ abstract public class NameSource {
             GbifTerm.organismPart,
             DwcTerm.taxonRemarks,
             ALATerm.status,
+            ALATerm.doi,
             DcTerm.source,
             DcTerm.provenance
     );
@@ -155,14 +158,19 @@ abstract public class NameSource {
     );
     /** Fields expected for a speices distribution */
     protected static final List<Term> DISTRIBUTION_REQUIRED = Arrays.asList(
-            DwcTerm.datasetID
+            DwcTerm.datasetID,
+            DwcTerm.locationID
     );
     /** Fields optional for a speices distribution */
     protected static final List<Term> DISTRIBUTION_ADDITIONAL = Arrays.asList(
-            DwcTerm.countryCode,
-            DwcTerm.stateProvince,
-            DwcTerm.locationID,
             DwcTerm.locality,
+            DwcTerm.stateProvince,
+            DwcTerm.country,
+            DwcTerm.countryCode,
+            DwcTerm.continent,
+            DwcTerm.island,
+            DwcTerm.islandGroup,
+            DwcTerm.waterBody,
             DwcTerm.lifeStage,
             DwcTerm.occurrenceStatus,
             IucnTerm.threatStatus,
@@ -173,10 +181,38 @@ abstract public class NameSource {
             DwcTerm.endDayOfYear,
             DwcTerm.occurrenceRemarks,
             DcTerm.source,
+            ALATerm.doi,
             DcTerm.provenance
     );
     /** Terms not to be included in identifier outputs */
     protected static final List<Term> DISTRIBUTION_FORBIDDEN = Arrays.asList(
+    );
+
+    /** Fields expected for a location */
+    protected static final List<Term> LOCATION_REQUIRED = Arrays.asList(
+            DwcTerm.locationID,
+            DwcTerm.locality
+     );
+    /** Fields optional for a speices distribution */
+    protected static final List<Term> LOCATION_ADDITIONAL = Arrays.asList(
+            ALATerm.parentLocationID,
+            ALATerm.geographyType,
+            DwcTerm.stateProvince,
+            DwcTerm.country,
+            DwcTerm.countryCode,
+            DwcTerm.continent,
+            DwcTerm.islandGroup,
+            DwcTerm.island,
+            DwcTerm.waterBody,
+            DwcTerm.locationRemarks,
+            DwcTerm.datasetID,
+            DwcTerm.datasetName,
+            DcTerm.source,
+            ALATerm.doi,
+            DcTerm.provenance
+    );
+    /** Terms not to be included in location outputs */
+    protected static final List<Term> LOCATION_FORBIDDEN = Arrays.asList(
     );
 
     /** Fields expected in the DwCA */
@@ -203,6 +239,7 @@ abstract public class NameSource {
             DwcTerm.namePublishedIn,
             DwcTerm.namePublishedInYear,
             DcTerm.source,
+            ALATerm.doi,
             DwcTerm.taxonRemarks,
             DcTerm.provenance,
             ALATerm.verbatimNomenclaturalCode,
@@ -219,6 +256,41 @@ abstract public class NameSource {
                     { DwcTerm.nomenclaturalStatus, Arrays.asList(ALATerm.verbatimNomenclaturalStatus) },
                     { DwcTerm.taxonRemarks, Arrays.asList(ALATerm.verbatimTaxonRemarks) }
             });
+    /** Fields expected for a reference */
+    protected static final List<Term> REFERENCE_REQUIRED = Arrays.asList(
+            DwcTerm.datasetID
+    );
+    /** Fields optional for a reference */
+    protected static final List<Term> REFERENCE_ADDITIONAL = Arrays.asList(
+            DcTerm.identifier,
+            ALATerm.doi,
+            DcTerm.bibliographicCitation,
+            DcTerm.title,
+            DcTerm.creator,
+            DcTerm.date,
+            DcTerm.source,
+            DcTerm.description,
+            DcTerm.subject,
+            DcTerm.language,
+            DcTerm.rights,
+            DwcTerm.taxonRemarks,
+            DcTerm.type
+    );
+    /** Terms not to be included in reference outputs */
+    protected static final List<Term> REFERENCE_FORBIDDEN = Arrays.asList(
+            DwcTerm.scientificName,
+            DwcTerm.scientificNameAuthorship,
+            DwcTerm.nomenclaturalCode,
+            DwcTerm.taxonRank,
+            DwcTerm.kingdom,
+            DwcTerm.phylum,
+            DwcTerm.class_,
+            DwcTerm.order,
+            DwcTerm.family,
+            DwcTerm.genus,
+            DwcTerm.specificEpithet,
+            DwcTerm.infraspecificEpithet
+    );
 
     /** Fields expected for a taxonomic issue */
     protected static final List<Term> TAXONOMIC_ISSUE_REQUIRED = Arrays.asList(
@@ -254,7 +326,9 @@ abstract public class NameSource {
                     { GbifTerm.VernacularName, VERNACULAR_REQUIRED },
                     { GbifTerm.Distribution, DISTRIBUTION_REQUIRED },
                     { ALATerm.TaxonVariant, TAXON_VARIANT_REQUIRED },
-                    { ALATerm.TaxonomicIssue, TAXONOMIC_ISSUE_REQUIRED }
+                    { ALATerm.TaxonomicIssue, TAXONOMIC_ISSUE_REQUIRED },
+                    { ALATerm.Location, LOCATION_REQUIRED },
+                    { GbifTerm.Reference, REFERENCE_REQUIRED }
             }
     );
     /** A map of row types and helpful additional terms */
@@ -265,7 +339,9 @@ abstract public class NameSource {
                     { GbifTerm.VernacularName, VERNACULAR_ADDITIONAL },
                     { GbifTerm.Distribution, DISTRIBUTION_ADDITIONAL },
                     { ALATerm.TaxonVariant, TAXON_VARIANT_ADDITIONAL },
-                    { ALATerm.TaxonomicIssue, TAXONOMIC_ISSUE_ADDITIONAL }
+                    { ALATerm.TaxonomicIssue, TAXONOMIC_ISSUE_ADDITIONAL },
+                    { ALATerm.Location, LOCATION_ADDITIONAL },
+                    { GbifTerm.Reference, REFERENCE_ADDITIONAL }
             }
     );
 
@@ -278,6 +354,8 @@ abstract public class NameSource {
                     { GbifTerm.Distribution, DISTRIBUTION_FORBIDDEN },
                     { ALATerm.TaxonVariant, TAXON_FORBIDDEN },
                     { ALATerm.TaxonomicIssue, TAXONOMIC_ISSUE_FORBIDDEN },
+                    { ALATerm.Location, LOCATION_FORBIDDEN },
+                    { GbifTerm.Reference, REFERENCE_FORBIDDEN }
             }
     );
 
@@ -296,9 +374,16 @@ abstract public class NameSource {
                     { GbifTerm.VernacularName, false },
                     { GbifTerm.Distribution, false },
                     { ALATerm.TaxonVariant, true },
-                    { ALATerm.TaxonomicIssue, true }
+                    { ALATerm.TaxonomicIssue, true },
+                    { ALATerm.Location, false },
+                    { GbifTerm.Reference, false }
             }
     );
+
+    /**
+     * Get the type of core row returned by this source
+     */
+    abstract public Term getCoreType();
 
     /**
      * Get a human-readable name for the source.
