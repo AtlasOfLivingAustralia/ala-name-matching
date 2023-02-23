@@ -1215,18 +1215,21 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testCultivars() {
-        try {
-            //species level concept
-            System.out.println("Hypoestes phyllostachya: " + searcher.searchForLSID("Hypoestes phyllostachya"));
-            //cultivar level concept
-            System.out.println("Hypoestes phyllostachya 'Splash': " + searcher.searchForRecord("Hypoestes phyllostachya 'Splash'", null));
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail("testCultivars failed");
-        }
+    public void testCultivar1() throws Exception {
+        NameSearchResult result = this.searcher.searchForRecord("Xerochrysum bracteatum");
+        assertNotNull(result);
+        assertEquals("https://id.biodiversity.org.au/node/apni/2891029", result.getLsid());
+        result = this.searcher.searchForRecord("Xerochrysum bracteatum 'Golden Beauty'");
+        assertNotNull(result);
+        assertEquals("https://id.biodiversity.org.au/name/apni/226061", result.getLsid());
     }
+
+    @Test
+    public void testCultivar2() throws Exception {
+        NameSearchResult result = this.searcher.searchForRecord("Grevillea 'Exul'");
+        assertNotNull(result);
+        assertEquals("https://id.biodiversity.org.au/name/apni/174076", result.getLsid());
+     }
 
     @Test
     public void testMyrmecia() {
