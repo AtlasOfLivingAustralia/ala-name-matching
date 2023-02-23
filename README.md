@@ -55,13 +55,13 @@ You can download the IRMNG DwCA for homonyms from the following URL:
 
 An assembly zip file for this can be downloaded from our maven repository : 
 
-[ala-name-matching-4.3-SNAPSHOT-distribution.zip](https://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching-distribution/4.3-SNAPSHOT/ala-name-matching-distribution-4.3-SNAPSHOT-distribution.zip)
+[ala-name-matching-4,3-distribution.zip](https://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching-distribution/4,3/ala-name-matching-distribution-4,3-distribution.zip)
 
 To generate the name index using the data described above, follow these steps. Alternatively use the [ALA Ansible scripts](https://github.com/AtlasOfLivingAustralia/ala-install) 
 here using the playbook [nameindexer.yml](https://github.com/AtlasOfLivingAustralia/ala-install/blob/master/ansible/nameindexer-standalone.yml) which does it all for you.
 
 * Download the zip files linked above to a directory e.g. /data/names/ and extract them
-* Download the distribution zip [ala-name-matching-disribution-4.3-SNAPSHOT-distribution.zip](https://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching-distribution/4.3-SNAPSHOT/ala-name-matching-distribution-4.3-SNAPSHOT-distribution.zip)
+* Download the distribution zip [ala-name-matching-disribution-4,3-distribution.zip](https://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching-distribution/4,3/ala-name-matching-distribution-4,3-distribution.zip)
   and unzip it.
  You wil find a number of shell scripts in the base directory.
 * Generate the names index with command:
@@ -94,13 +94,13 @@ To skip this step, run a build with ```mvn install -DskipTests=true```.
 
 The build creates one artefact in the `ala-name-matching-distribution/target` directory: 
 
-* ala-name-matching-distribution-4.3-SNAPSHOT-distribution.zip - zip containing the project jar and dependencies
+* ala-name-matching-distribution-4,3-distribution.zip - zip containing the project jar and dependencies
 
 Each module contains two artefacts in the 
 `ala-name-matching/ala-name-matching-<module>/target` directory:
 
-* ala-name-matching-<module>-4.3-SNAPSHOT.jar - built jar for the project code only
-* ala-name-matching-<module>-4.3-SNAPSHOT-sources.jar - source jar for the project code only
+* ala-name-matching-<module>-4,3.jar - built jar for the project code only
+* ala-name-matching-<module>-4,3-sources.jar - source jar for the project code only
 
 The name index for Australian names lists used in unit tests can be downloaded [from here](https://biocache.ala.org.au/archives/nameindexes/20210811-5) and needs to be extracted to the
 directory `/data/lucene/namematching-20210811-5`
@@ -139,7 +139,7 @@ To use ala-name-matching, include it as a dependency in your pom file:
 <dependency>
   <groupId>au.org.ala</groupId>
   <artifactId>ala-name-matching-search</artifactId>
-  <version>4.3-SNAPSHOT</version>
+  <version>4,3</version>
 </dependency>
 ```
 
@@ -148,7 +148,7 @@ If you just want the handy enums and such-like, use
 <dependency>
   <groupId>au.org.ala</groupId>
   <artifactId>ala-name-matching-model</artifactId>
-  <version>4.3-SNAPSHOT</version>
+  <version>4,3</version>
 </dependency>
 ```
 
@@ -158,7 +158,7 @@ libraries having validation code that conflicts with spring validation.
 You can correct this by using
 
 ```
-compile("au.org.ala:ala-name-matching-search:4.3-SNAPSHOT") {
+compile("au.org.ala:ala-name-matching-search:4,3") {
     exclude group: 'org.slf4j', module: 'slf4j-log4j12'
     exclude group: 'org.apache.bval', module: 'org.apache.bval.bundle'
 }
