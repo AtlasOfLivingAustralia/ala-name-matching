@@ -11,7 +11,7 @@
     <artifactId>ala-name-matching</artifactId>
     <packaging>pom</packaging>
     <!-- Major version increment due to package structure change -->
-    <version>4,3</version>
+    <version>4.3</version>
 
     <modules>
         <module>ala-name-matching-model</module>
