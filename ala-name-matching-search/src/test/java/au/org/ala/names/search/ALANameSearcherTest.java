@@ -1215,18 +1215,21 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testCultivars() {
-        try {
-            //species level concept
-            System.out.println("Hypoestes phyllostachya: " + searcher.searchForLSID("Hypoestes phyllostachya"));
-            //cultivar level concept
-            System.out.println("Hypoestes phyllostachya 'Splash': " + searcher.searchForRecord("Hypoestes phyllostachya 'Splash'", null));
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail("testCultivars failed");
-        }
+    public void testCultivar1() throws Exception {
+        NameSearchResult result = this.searcher.searchForRecord("Xerochrysum bracteatum");
+        assertNotNull(result);
+        assertEquals("https://id.biodiversity.org.au/node/apni/2891029", result.getLsid());
+        result = this.searcher.searchForRecord("Xerochrysum bracteatum 'Golden Beauty'");
+        assertNotNull(result);
+        assertEquals("https://id.biodiversity.org.au/name/apni/226061", result.getLsid());
     }
+
+    @Test
+    public void testCultivar2() throws Exception {
+        NameSearchResult result = this.searcher.searchForRecord("Grevillea 'Exul'");
+        assertNotNull(result);
+        assertEquals("https://biodiversity.org.au/nsl/services/rest/name/apni/174076", result.getLsid());
+     }
 
     @Test
     public void testMyrmecia() {
@@ -2083,6 +2086,17 @@ public class ALANameSearcherTest {
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
         assertNotNull(metrics);
         assertEquals("https://id.biodiversity.org.au/node/apni/2903953", metrics.getResult().getLsid());
+        assertEquals(MatchType.PHRASE, metrics.getResult().getMatchType());
+    }
+
+    @Test
+    public void testPhraseName5() throws Exception {
+        String name = "Galaxias sp. 14";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertNotNull(metrics);
+        assertEquals("https://biodiversity.org.au/afd/taxa/dd9ccbd9-2b23-4e64-8a68-ec70e2146770", metrics.getResult().getLsid());
         assertEquals(MatchType.PHRASE, metrics.getResult().getMatchType());
     }
 
