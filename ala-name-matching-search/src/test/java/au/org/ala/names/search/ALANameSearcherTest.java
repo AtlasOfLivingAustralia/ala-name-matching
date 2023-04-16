@@ -2173,4 +2173,28 @@ public class ALANameSearcherTest {
         assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
     }
 
+    // Test ensuring that preferred vernacular name is populated
+    // Isseu 181
+    @Ignore // Ignore until new name index is standardised (checked before commit)
+    public void testPreferredVernacular1() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Falco peregrinus");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, false);
+        assertNotNull(metrics);
+        assertEquals("https://biodiversity.org.au/afd/taxa/083b413f-8746-4788-8dc1-3da495d78a79", metrics.getResult().getLsid());
+        assertEquals("Peregrine Falcon", metrics.getResult().getVernacularName());
+    }
+
+    // Test ensuring that preferred vernacular name is populated
+    // Isseu 181
+    @Ignore // Ignore until new name index is standardised
+    public void testPreferredVernacular2() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Hoplostethus atlanticus");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, false);
+        assertNotNull(metrics);
+        assertEquals("https://biodiversity.org.au/afd/taxa/340484bd-33f6-4b46-a63c-751f0b159ed1", metrics.getResult().getLsid());
+        assertEquals("Orange Roughy", metrics.getResult().getVernacularName());
+    }
+
 }

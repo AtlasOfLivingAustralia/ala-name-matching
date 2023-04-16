@@ -66,6 +66,9 @@ public class ALANameSearcher {
     /** Don't consider taxa below this limit for matches, unless there's nothing else */
     public static float MATCH_LIMIT = 0.5f;
 
+    /** Sort order for vernacular names */
+    public static Sort VERNACULAR_ORDER = new Sort(new SortField(NameIndexField.PRIORITY.toString(), SortField.Type.INT, true));
+
     protected Log log = LogFactory.getLog(ALANameSearcher.class);
     protected DirectoryReader cbReader, irmngReader, vernReader;
     protected IndexSearcher cbSearcher, irmngSearcher, vernSearcher, idSearcher;
@@ -1613,7 +1616,7 @@ public class ALANameSearcher {
         if (lsid != null) {
             Query query = NameIndexField.LSID.search(lsid);
             try {
-                TopDocs results = vernSearcher.search(query, 1);
+                TopDocs results = vernSearcher.search(query,1, VERNACULAR_ORDER);
                 log.debug("Number of matches for " + lsid + " " + results.totalHits);
                 for (ScoreDoc sdoc : results.scoreDocs) {
                     org.apache.lucene.document.Document doc = vernSearcher.doc(sdoc.doc);
@@ -1639,7 +1642,7 @@ public class ALANameSearcher {
                     BooleanQuery.Builder builder = new BooleanQuery.Builder();
                     builder.add(NameIndexField.LSID.search(lsid), BooleanClause.Occur.MUST);
                     builder.add(NameIndexField.LANGUAGE.search(language), BooleanClause.Occur.MUST);
-                    TopDocs results = vernSearcher.search(builder.build(), 1);
+                    TopDocs results = vernSearcher.search(builder.build(), 1, VERNACULAR_ORDER);
                     log.debug("Number of matches for " + lsid + " " + results.totalHits);
                     for (ScoreDoc sdoc : results.scoreDocs) {
                         org.apache.lucene.document.Document doc = vernSearcher.doc(sdoc.doc);
@@ -1662,7 +1665,7 @@ public class ALANameSearcher {
         if (lsid != null) {
             Query query = NameIndexField.LSID.search(lsid);
             try {
-                TopDocs results = vernSearcher.search(query, maxNumberOfNames);
+                TopDocs results = vernSearcher.search(query, maxNumberOfNames, VERNACULAR_ORDER);
                 //if all the results have the same scientific name result the LSID for the first
                 log.debug("Number of matches for " + lsid + " " + results.totalHits);
                 Set<String> names = new HashSet<String>();
@@ -2251,7 +2254,8 @@ public class ALANameSearcher {
         String acceptedLsid = doc.get(NameIndexField.ACCEPTED.toString());
         IndexableField pf = doc.getField(NameIndexField.PRIORITY.toString());
         Integer priority = pf == null ? null : pf.numericValue().intValue();
-        NameSearchResult result = new NameSearchResult(id, lsid, acceptedLsid, left, right, rankClass, rank, type, synonymType, priority);
+        String vernacularName = doc.get(NameIndexField.COMMON_NAME.toString());
+        NameSearchResult result = new NameSearchResult(id, lsid, acceptedLsid, left, right, rankClass, rank, type, synonymType, vernacularName, priority);
         result.setRank(rank);
         result.setLeft(left);
         result.setRight(right);

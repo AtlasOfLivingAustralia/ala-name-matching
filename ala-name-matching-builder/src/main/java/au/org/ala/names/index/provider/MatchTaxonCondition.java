@@ -16,9 +16,7 @@
 
 package au.org.ala.names.index.provider;
 
-import au.org.ala.names.index.NameKey;
-import au.org.ala.names.index.NomenclaturalClassifier;
-import au.org.ala.names.index.TaxonConceptInstance;
+import au.org.ala.names.index.*;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonFlag;
 import au.org.ala.names.model.TaxonomicType;
@@ -185,11 +183,13 @@ public class MatchTaxonCondition extends TaxonCondition {
      * Match the taxon instance against the supplied conditions.
      *
      * @param instance The instance to match
+     * @param key The name key for the instance
+     * @param provider The provider for match context
      *
      * @return True if the instance matches all the supplied conditions
      */
     @Override
-    public boolean match(TaxonConceptInstance instance, NameKey key) {
+    public boolean match(TaxonConceptInstance instance, NameKey key, NameProvider provider) {
         if (this.nomenclaturalCode != null && this.nomenclaturalCode != instance.getCode())
             return false;
         if (this.datasetID != null && (instance.getProvider() == null || !this.datasetID.equals(instance.getProvider().getId())))
@@ -211,6 +211,21 @@ public class MatchTaxonCondition extends TaxonCondition {
         if (this.taxonomicFlag != null && !instance.hasFlag(this.taxonomicFlag))
             return false;
         return true;
+    }
+
+    /**
+     * Does this condition match a vernacular name?
+     *
+     * @param name The name to match
+     * @param provider The provider for match context
+     *
+     * @return Always false
+     *
+     * @see MatchVernacularCondition
+     */
+    @Override
+    public boolean match(VernacularName name, NameProvider provider) {
+        return false;
     }
 
     /**
@@ -309,26 +324,4 @@ public class MatchTaxonCondition extends TaxonCondition {
         this.explain(builder, "taxonomicFlag", this.taxonomicFlag);
         return builder.toString();
     }
-
-    /**
-     * Make an explainer for each field
-     *
-     * @param builder The builder to add to
-     * @param label The field label
-     * @param elements The matching elements
-     */
-    private void explain(StringBuilder builder, String label, Object... elements) {
-        if (elements.length == 0 || elements[0] == null)
-            return;
-        if (builder.length() > 0)
-            builder.append(" ");
-        builder.append(label);
-        builder.append(":");
-        for (int i = 0; i < elements.length; i++) {
-            if (i > 0)
-                builder.append(",");
-            builder.append(elements[i]);
-        }
-    }
-
 }

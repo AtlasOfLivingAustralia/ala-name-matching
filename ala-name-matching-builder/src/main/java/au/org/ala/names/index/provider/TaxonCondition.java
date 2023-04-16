@@ -17,7 +17,9 @@
 package au.org.ala.names.index.provider;
 
 import au.org.ala.names.index.NameKey;
+import au.org.ala.names.index.NameProvider;
 import au.org.ala.names.index.TaxonConceptInstance;
+import au.org.ala.names.index.VernacularName;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -39,10 +41,21 @@ abstract public class TaxonCondition {
      *
      * @param instance The instance to match
      * @param key The associated name key
+     * @param provider The provider for match context
      *
      * @return True on a match
      */
-    abstract public boolean match(TaxonConceptInstance instance, NameKey key);
+    abstract public boolean match(TaxonConceptInstance instance, NameKey key, NameProvider provider);
+
+    /**
+     * Does this condition match an vernacular name?
+     *
+     * @param name The name to match
+     * @param provider The provider for match context
+     *
+     * @return True on a match
+     */
+    abstract public boolean match(VernacularName name, NameProvider provider);
 
     /**
      * Provide a string explanation of the condition.
@@ -50,4 +63,26 @@ abstract public class TaxonCondition {
      * @return A string describing the condition
      */
     abstract public String explain();
+
+    /**
+     * Make an explainer for a field
+     *
+     * @param builder The builder to add to
+     * @param label The field label
+     * @param elements The matching elements
+     */
+    protected void explain(StringBuilder builder, String label, Object... elements) {
+        if (elements.length == 0 || elements[0] == null)
+            return;
+        if (builder.length() > 0)
+            builder.append(" ");
+        builder.append(label);
+        builder.append(":");
+        for (int i = 0; i < elements.length; i++) {
+            if (i > 0)
+                builder.append(",");
+            builder.append(elements[i]);
+        }
+    }
+
 }

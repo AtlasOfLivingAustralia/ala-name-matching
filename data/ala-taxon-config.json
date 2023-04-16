@@ -16,6 +16,7 @@
       "description": "Top-level provider for default adjustments",
       "external": false,
       "defaultScore" : 0,
+      "defaultVernacularScore": 700,
       "unknownTaxonID" : "ALA_The_Unknown_Taxon",
       "distributionCutoff": "GENUS",
       "adjuster": {
@@ -680,6 +681,73 @@
               "taxonomicFlag": "AMBIGUOUS_NOMENCLATURAL_CODE"
             },
             "nomenclaturalCode": "EUK"
+          }
+        ]
+      },
+      "vernacularAdjuster": {
+        "forbidden": [
+          {
+            "@class": "au.org.ala.names.index.provider.MatchVernacularCondition",
+            "status": "DEPRECATED"
+          }
+        ],
+        "adjustments": [
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchVernacularCondition",
+              "status": "STANDARD"
+            },
+            "adjustment": 200
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchVernacularCondition",
+              "status": "PREFERRED"
+            },
+            "adjustment": 100
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchVernacularCondition",
+              "status": "TRADITIONAL_KNOWLEDGE"
+            },
+            "adjustment": -100
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchVernacularCondition",
+              "status": "LEGISLATIVE"
+            },
+            "adjustment": -200
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchVernacularCondition",
+              "status": "MISCELLANEOUS_LITERATURE"
+            },
+            "adjustment": -300
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchVernacularCondition",
+              "status": "LOCAL"
+            },
+            "adjustment": -400
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchVernacularCondition",
+              "status": "DEPRECATED"
+            },
+            "adjustment": -1000
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchVernacularCondition",
+              "language": "en.*",
+              "matchType": "REGEX"
+            },
+            "adjustment": 50
           }
         ]
       },

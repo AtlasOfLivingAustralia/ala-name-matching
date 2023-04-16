@@ -14,6 +14,7 @@
  */
 package au.org.ala.names.search;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
@@ -96,9 +97,28 @@ public enum NameIndexField {
      * @param document The document
      */
     public <T> void store(T value, Document document) {
+        if (value != null && value instanceof String) {
+            value = (T) StringUtils.trimToNull((String) value);
+        }
         if (value == null)
             return;
-        this.type.store(value, this.name, document);
+        this.type.store(value, name, document);
+    }
+
+
+    /**
+     * Store an indexed value into this field in a document
+     *
+     * @param value The value
+     * @param document The document
+     */
+    public <T> void index(T value, Document document) {
+        if (value != null && value instanceof String) {
+            value = (T) StringUtils.trimToNull((String) value);
+        }
+        if (value == null)
+            return;
+        this.type.index(value, this.name, document);
     }
 
     /**

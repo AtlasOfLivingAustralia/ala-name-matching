@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A taxonomic concept. A scientific name, author and placement in
@@ -48,6 +49,8 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     private TaxonResolution resolution;
     /** Has this concept been cleared (completely reallocated)? */
     private boolean cleared;
+    /** The preferred vernacular name, if any */
+    private VernacularName preferred;
 
     /**
      * Construct for new scientific name and a name key
@@ -88,6 +91,15 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
      */
     public boolean isResolved() {
         return this.resolution != null;
+    }
+
+    /**
+     * Get the preferred vernacular name
+     *
+     * @return The preferred vernacular name, or none for no preferred name
+     */
+    public VernacularName getPreferred() {
+        return this.preferred;
     }
 
     /**
@@ -248,6 +260,8 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
                 writer.newRecord(tci.getTaxonID());
                 taxonomy.count("count.write.taxonConcept");
                 Map<Term, String> values = tci.getTaxonMap(taxonomy, true);
+                if (this.preferred != null)
+                    values.put(DwcTerm.vernacularName, this.preferred.getVernacularName());
                 for (Term term : taxonomy.outputTerms(DwcTerm.Taxon))
                     if (term != DwcTerm.taxonID) // Already added as coreId
                         writer.addCoreColumn(term, values.get(term));
@@ -257,6 +271,10 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
                         dist.writeExtension(taxonomy, writer);
                     }
                 }
+                List<VernacularName> vernacular = this.resolution.getVernacular(tci);
+                for (VernacularName vn: vernacular) {
+                    this.writeExtension(GbifTerm.VernacularName, vn.asMap(taxonomy), taxonomy, writer);
+                }
                 for (TaxonConceptInstance sub : allocated) {
                     if (!sub.isOutput())
                         continue;
@@ -264,8 +282,6 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
                     taxonomy.count("count.write.taxonConceptInstance");
                     for (Map<Term, String> id : sub.getIdentifierMaps(taxonomy))
                         this.writeExtension(GbifTerm.Identifier, id, taxonomy, writer);
-                    for (Map<Term, String> vn : sub.getVernacularMaps(taxonomy))
-                        this.writeExtension(GbifTerm.VernacularName, vn, taxonomy, writer);
                     for (Map<Term, String> vn : sub.getReferenceMaps(taxonomy))
                         this.writeExtension(GbifTerm.Reference, vn, taxonomy, writer);
                 }
@@ -580,6 +596,30 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
             for (TaxonConcept tc: resolve) {
                 tc.resolveTaxon(taxonomy, true);
             }
+        }
+    }
+
+    /**
+     * Select a preferred vernacular name for this taxon concept.
+     * <p>
+     * Choose the non-forbidden name with the highest score.
+     * Simples.
+     * </p>
+     * @param taxonomy
+     */
+    public void buildPreferredVernacular(Taxonomy taxonomy) {
+        List<TaxonConceptInstance> principals = this.getPrincipals() == null ? this.getUsed() : this.getPrincipals();
+        Optional<VernacularName> name = principals.stream()
+                .filter(tci -> tci.isOutput())
+                .flatMap(tci -> this.resolution == null ? Stream.of(tci) : this.resolution.getChildren(tci).stream())
+                .flatMap(tci -> tci.getVernacularNames() == null ? Stream.empty() : tci.getVernacularNames().stream())
+                .filter(vn -> !vn.isForbidden())
+                .sorted((vn1, vn2) -> vn2.getScore() - vn1.getScore())
+                .findFirst();
+        if (name.isPresent()) {
+            this.preferred = name.get();
+            taxonomy.report(IssueType.NOTE, "taxonConcept.vernacular.preferred", this.getTaxonID(), this.getNameComplete(), this.preferred.getNameID(), this.preferred.getVernacularName());
+            taxonomy.count("count.taxonConcept.vernacular.preferred");
         }
     }
 }

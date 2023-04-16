@@ -20,6 +20,7 @@ import au.org.ala.names.model.RankType;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * The resolution of a taxon concept.
@@ -135,6 +136,23 @@ public class TaxonResolution {
     public void addDistribution(TaxonConceptInstance instance, List<Distribution> distribution) {
         this.distributions.put(instance, distribution);
     }
+
+
+    /**
+     * Get the vernacular names for an instance
+     *
+     * @param instance The instance
+     * @return The vernacular names
+     */
+    public List<VernacularName> getVernacular(TaxonConceptInstance instance) {
+        return this.getChildren(instance).stream()
+                .filter(tci -> tci.isOutput())
+                .flatMap(tci -> tci.getVernacularNames() == null ? Stream.empty() : tci.getVernacularNames().stream())
+                .filter(vn -> !vn.isForbidden())
+                .sorted((vn1, vn2) -> vn2.getScore() - vn1.getScore())
+                .collect(Collectors.toList());
+    }
+
 
     /**
      * Add an internal resolution.

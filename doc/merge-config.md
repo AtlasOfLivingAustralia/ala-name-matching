@@ -61,12 +61,15 @@ Each provider contains the following information:
   is made to extract authorship during analysis.
 * **defaultNomenclaturalCode** The nomenclatural code to use for a name, if one is not explicitly provided.
 * **defaultScore** The default score to use when scoring taxon concepts.
+* **defaultVernacularScore** The default score to use when scoring vernacular names.
 * **scores** A dictionary of name:score pairs containing non-default scores for specific names. 
   Once a name has been matched, all child taxa of the name inherit that score.
 * **adjuster** Adjustments to the scores, based on things like taxonomic status,
   rank etc. See [adjusters](#Adjusters) below.
 * **keyAdjuster** Adjustments to the name keys, based on things like name.
   See [adjusters](#Adjusters) below.
+* **vernacularAdjuster** Adjustments to the vernacular name scores, based on things like vernacula status,
+  language etc. See [adjusters](#Adjusters) below.
 * **owner** A list of names that this provider "owns", meaning that an unauthored name
   will always be mapped onto the taxon concept supplied by this provider.
 * **discardStrategy** How to handle discarded/forbidden names (eg. unplaced names). This can be one of
@@ -122,6 +125,11 @@ The possible classes are:
 
 * `au.org.ala.names.index.provider.MatchTaxonCondition` 
    matches a number of specified criteria on a taxon.
+* `au.org.ala.names.index.provider.MatchVernacularCondition`
+  matches a number of specified criteria on a vernacular name.
+  Although there is no particular reson to do so, taxon match and
+  vernacular match conditions will accept both
+* taxa and vernacular names; they will simply fail to match the wrong type.
 * `au.org.ala.names.index.provider.OrTaxonCondition` Any of
    the conditions in the **any** property can match.
 * `au.org.ala.names.index.provider.AndTaxonCondition` All of
@@ -148,6 +156,25 @@ All specified criteria must be matched.
 * **taxonRank** Match a rank from the 
   `au.org.ala.names.model.RankType` vocabulary
 * **year** Match a year of publication
+
+Vernacular names can be match against a MatchVernacularCondition.
+This can be used to match a number of criteria on an individual vernacular names.
+All specified criteria must be matched.
+
+* **datasetID** Match a specific datasetID
+* **vernacularName** Match a scientificName.
+* **status** Match a vernacular status from the
+  `au.org.ala.names.model.VernacularType` vocabulary.
+* **isPreferredName** Match a preferred name flag
+* **language** Match a language code. This is usually an ISO code but may not be if more precision is required.
+* **locality** Match a location. 
+  The locality can be a location identifier or name.
+  A vernacular name matches if this locality
+  encompasses the locality of the vernacular name
+  (eg a name for NSW will match a locality of Australia)
+* **matchType** The type of name/language match, one of EXACT the default,
+  INSENSITIVE (case insensitive), NORMALISED (accents and odd characters
+  normalised to ASCII) and REGEX (regular expression)
 
 ### Adjustments
 

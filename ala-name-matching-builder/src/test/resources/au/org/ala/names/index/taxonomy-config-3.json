@@ -30,9 +30,14 @@
     "id" : "ID-1",
     "name" : "ID-1",
     "defaultScore" : 150,
+    "defaultVernacularScore" : 150,
     "scores" : { },
     "owner" : [ ],
     "adjuster" : {
+      "forbidden" : [ ],
+      "adjustments" : [ ]
+    },
+    "vernacularAdjuster" : {
       "forbidden" : [ ],
       "adjustments" : [ ]
     },

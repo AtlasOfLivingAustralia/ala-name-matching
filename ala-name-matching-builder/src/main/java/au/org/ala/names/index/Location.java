@@ -16,17 +16,6 @@
 
 package au.org.ala.names.index;
 
-import au.org.ala.vocab.ALATerm;
-import com.opencsv.CSVReader;
-import com.opencsv.CSVReaderBuilder;
-import com.opencsv.exceptions.CsvValidationException;
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.GbifTerm;
-
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.URL;
 import java.util.*;
 
 /**
@@ -43,11 +32,19 @@ public class Location {
     private String locality;
     /** The type of geography this represents */
     private String geographyType;
+    /** The locality weight, for disambiguation */
+    private double weight;
+    /** A list of alternative identifiers */
+    private List<String> identifiers;
+    /** A list fo alternative names */
+    private List<String> names;
 
     /**
      * Empty constructor
      */
     protected Location() {
+        this.identifiers = Collections.emptyList();
+        this.names = Collections.emptyList();
     }
 
     /**
@@ -58,11 +55,14 @@ public class Location {
      * @param locality The locality (name)
      * @param geographyType The type of geography
      */
-    public Location(String locationID, String parentLocationID, String locality, String geographyType) {
+    public Location(String locationID, String parentLocationID, String locality, String geographyType, double weight, List<String> identifiers, List<String> names) {
         this.locationID = locationID;
         this.parentLocationID = parentLocationID;
         this.locality = locality;
         this.geographyType = geographyType;
+        this.weight = weight;
+        this.identifiers = identifiers;
+        this.names = names;
     }
 
     /**
@@ -113,18 +113,49 @@ public class Location {
     }
 
     /**
+     * Get the location weight
+     * <p>
+     * Location weights are measures of how important the loction is.
+     * Without further information, the location with the highest weight is chosen
+     * </p>
+     *
+     * @return A measure of how important the location is.
+     */
+    public double getWeight() {
+        return weight;
+    }
+
+    /**
+     * Get the list of alternative identifiers
+     *
+     * @return The alterantive identifiers for this location
+     */
+    public List<String> getIdentifiers() {
+        return identifiers;
+    }
+
+    /**
+     * Get the list of alternative names
+     *
+     * @return The alternative names for this location
+     */
+    public List<String> getNames() {
+        return names;
+    }
+
+    /**
      * Resolve parent locations
      *
      * @param locations The location map
      *
      * @throws IllegalStateException if the parent location is not found
      */
-    public void resolve(Map<String, Location> locations) {
+    public void resolve(LocationResolver resolver) {
         if (this.parentLocationID == null) {
             this.parent = null;
             return;
         }
-        this.parent = locations.get(this.parentLocationID);
+        this.parent = resolver.get(this.parentLocationID);
         if (this.parent == null)
             throw new IllegalStateException("Can't find parent location " + this.parentLocationID);
     }

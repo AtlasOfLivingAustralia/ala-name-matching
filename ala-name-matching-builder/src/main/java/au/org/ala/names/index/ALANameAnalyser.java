@@ -456,6 +456,7 @@ public class ALANameAnalyser extends NameAnalyser {
         }
         this.loadCsv(DEFAULT_RANK_CODE_MAP, this.rankMap, RankType.class);
     }
+
     /**
      * Build a synonym map.
      */
@@ -465,7 +466,7 @@ public class ALANameAnalyser extends NameAnalyser {
         this.loadCsv(DEFAULT_NONEMCLATURAL_STATUS_CODE_MAP, this.nomenclaturalStatusMap, NomenclaturalStatus.class);
     }
 
-    protected void buildInformalPatternList() {
+     protected void buildInformalPatternList() {
         this.informalPatterns = new ArrayList<>(32);
         this.loadPatternCsv(DEFAULT_INFORMAL_PATTERN_LIST, this.informalPatterns);
     }
@@ -484,7 +485,7 @@ public class ALANameAnalyser extends NameAnalyser {
         code = code.toUpperCase().trim();
         NomenclaturalClassifier nc = NomenclaturalClassifier.find(code);
         if (nc == null)
-            this.report(IssueType.PROBLEM, "nomenclaturalCode.notFound", null, null, code);
+            this.report(IssueType.PROBLEM, "nomenclaturalCode.notFound", "", null, code);
         return nc;
     }
 
@@ -507,7 +508,7 @@ public class ALANameAnalyser extends NameAnalyser {
             return TaxonomicType.INFERRED_UNPLACED;
         TaxonomicType type = this.taxonomicTypeMap.get(taxonomicStatus);
         if (type == null) {
-            this.report(IssueType.PROBLEM, "taxonomicStatus.notFound", null, null, taxonomicStatus);
+            this.report(IssueType.PROBLEM, "taxonomicStatus.notFound", "", null, taxonomicStatus);
             type = TaxonomicType.INFERRED_UNPLACED;
             synchronized (this) {
                 this.taxonomicTypeMap.put(taxonomicStatus, type); // Report once
@@ -552,7 +553,7 @@ public class ALANameAnalyser extends NameAnalyser {
             return RankType.UNRANKED;
         RankType rankType = this.rankMap.get(rank);
         if (rankType == null) {
-            this.report(IssueType.PROBLEM, "rank.notFound", null, null, rank);
+            this.report(IssueType.PROBLEM, "rank.notFound", "", null, rank);
             rankType = RankType.UNRANKED;
             synchronized (this) {
                 this.rankMap.put(rank, rankType); // Report once
@@ -580,7 +581,7 @@ public class ALANameAnalyser extends NameAnalyser {
             return null;
         NomenclaturalStatus status = this.nomenclaturalStatusMap.get(nomenclaturalStatus);
         if (status == null && !this.nomenclaturalStatusMap.containsKey(nomenclaturalStatus)) {
-            this.report(IssueType.PROBLEM, "nomenclaturalStatus.notFound", null, null, nomenclaturalStatus);
+            this.report(IssueType.PROBLEM, "nomenclaturalStatus.notFound", "", null, nomenclaturalStatus);
             synchronized (this) {
                 this.nomenclaturalStatusMap.put(nomenclaturalStatus, null); // Report once
             }

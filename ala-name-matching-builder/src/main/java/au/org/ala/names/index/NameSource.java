@@ -77,6 +77,7 @@ abstract public class NameSource {
             DwcTerm.namePublishedInID,
             DwcTerm.namePublishedIn,
             DwcTerm.namePublishedInYear,
+            DwcTerm.vernacularName,
             DcTerm.source,
             ALATerm.doi,
             DwcTerm.taxonRemarks,
@@ -125,6 +126,7 @@ abstract public class NameSource {
     /** Fields optional for an identifier */
     protected static final List<Term> VERNACULAR_ADDITIONAL = Arrays.asList(
             ALATerm.nameID,
+            ALATerm.status,
             DcTerm.language,
             DcTerm.temporal,
             DwcTerm.locationID,
@@ -136,10 +138,10 @@ abstract public class NameSource {
             GbifTerm.isPreferredName,
             GbifTerm.organismPart,
             DwcTerm.taxonRemarks,
-            ALATerm.status,
             ALATerm.doi,
             DcTerm.source,
-            DcTerm.provenance
+            DcTerm.provenance,
+            ALATerm.priority
     );
     /** Terms not to be included in vernacular outputs */
     protected static final List<Term> VERNACULAR_FORBIDDEN = Arrays.asList(
@@ -464,5 +466,25 @@ abstract public class NameSource {
         } catch (CsvValidationException ex) {
             throw new IllegalStateException(ex);
         }
+    }
+
+    /**
+     * Parse a boolean value from a string.
+     *
+     * @param value The value
+     * @param dflt The default value if null
+     *
+     * @return The parsed value
+     *
+     * @throws IllegalArgumentException if unable to recognise a proper-looking true/false value
+     */
+    public static boolean parseBoolean(String value, boolean dflt) throws IllegalArgumentException {
+        if (value == null || value.isEmpty())
+            return dflt;
+        if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("t") || value.equalsIgnoreCase("y"))
+            return true;
+        if (value.equalsIgnoreCase("false") || value.equalsIgnoreCase("no") || value.equalsIgnoreCase("f") || value.equalsIgnoreCase("n"))
+            return false;
+        throw new IllegalArgumentException("Unrecognised boolean value " + value);
     }
 }

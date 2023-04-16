@@ -18,6 +18,7 @@ package au.org.ala.names.index.provider;
 
 import au.org.ala.names.index.*;
 import au.org.ala.names.model.TaxonomicType;
+import au.org.ala.names.model.VernacularType;
 import au.org.ala.names.util.TestUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -52,7 +53,7 @@ public class OrTaxonConditionTest extends TestUtils {
         condition.add(condition1);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
         NameKey key = this.analyser.analyse(instance).getNameKey();
-        assertTrue(condition.match(instance, key));
+        assertTrue(condition.match(instance, key, this.provider));
     }
 
     @Test
@@ -63,7 +64,7 @@ public class OrTaxonConditionTest extends TestUtils {
         condition.add(condition1);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
         NameKey key = this.analyser.analyse(instance).getNameKey();
-        assertFalse(condition.match(instance, key));
+        assertFalse(condition.match(instance, key, this.provider));
     }
 
 
@@ -78,7 +79,7 @@ public class OrTaxonConditionTest extends TestUtils {
         condition.add(condition2);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
         NameKey key = this.analyser.analyse(instance).getNameKey();
-        assertTrue(condition.match(instance, key));
+        assertTrue(condition.match(instance, key, this.provider));
     }
 
     @Test
@@ -92,7 +93,7 @@ public class OrTaxonConditionTest extends TestUtils {
         condition.add(condition2);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
         NameKey key = this.analyser.analyse(instance).getNameKey();
-        assertTrue(condition.match(instance, key));
+        assertTrue(condition.match(instance, key, this.provider));
     }
 
     @Test
@@ -106,7 +107,7 @@ public class OrTaxonConditionTest extends TestUtils {
         condition.add(condition2);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.ACCEPTED);
         NameKey key = this.analyser.analyse(instance).getNameKey();
-        assertTrue(condition.match(instance, key));
+        assertTrue(condition.match(instance, key, this.provider));
     }
 
     @Test
@@ -120,8 +121,34 @@ public class OrTaxonConditionTest extends TestUtils {
         condition.add(condition2);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Acacia dealbata", this.provider, TaxonomicType.ACCEPTED);
         NameKey key = this.analyser.analyse(instance).getNameKey();
-        assertFalse(condition.match(instance, key));
+        assertFalse(condition.match(instance, key, this.provider));
     }
+    @Test
+    public void testMatchVernacular1() {
+        OrTaxonCondition condition = new OrTaxonCondition();
+        MatchVernacularCondition condition1 = new MatchVernacularCondition();
+        condition1.setStatus(VernacularType.PREFERRED);
+        MatchVernacularCondition condition2 = new MatchVernacularCondition();
+        condition1.setLanguage("en");
+        condition.add(condition1);
+        condition.add(condition2);
+        VernacularName name = this.createVernacular("ID-1", "Good boy", this.provider, VernacularType.PREFERRED, true, "fr", null);
+        assertTrue(condition.match(name, this.provider));
+    }
+
+    @Test
+    public void testMatchVernacular2() {
+        OrTaxonCondition condition = new OrTaxonCondition();
+        MatchVernacularCondition condition1 = new MatchVernacularCondition();
+        condition1.setStatus(VernacularType.PREFERRED);
+        MatchVernacularCondition condition2 = new MatchVernacularCondition();
+        condition2.setLanguage("en");
+        condition.add(condition1);
+        condition.add(condition2);
+        VernacularName name = this.createVernacular("ID-1", "Bon fils", this.provider, VernacularType.COMMON, true, "fr", null);
+        assertFalse(condition.match(name, this.provider));
+    }
+
 
     @Test
     public void testWrite1() throws Exception {
@@ -145,13 +172,13 @@ public class OrTaxonConditionTest extends TestUtils {
         OrTaxonCondition condition = mapper.readValue(this.resourceReader("or-condition-1.json"), OrTaxonCondition.class);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
         NameKey key = this.analyser.analyse(instance).getNameKey();
-        assertTrue(condition.match(instance, key));
+        assertTrue(condition.match(instance, key, this.provider));
         instance = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.ACCEPTED);
         key = this.analyser.analyse(instance).getNameKey();
-        assertTrue(condition.match(instance, key));
+        assertTrue(condition.match(instance, key, this.provider));
         instance = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Acacia dealbata", this.provider, TaxonomicType.ACCEPTED);
         key = this.analyser.analyse(instance).getNameKey();
-        assertFalse(condition.match(instance, key));
+        assertFalse(condition.match(instance, key, this.provider));
     }
 
 }
