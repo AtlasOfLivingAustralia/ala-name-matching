@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.*;
@@ -1181,6 +1182,35 @@ public class TaxonomyTest extends TestUtils {
         assertTrue(vernacular.exists());
         // this.dumpFile(vernacular);
         assertEquals(8, this.rowCount(vernacular));
+    }
+    @Test
+    public void testPreferredVernacular4() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        DwcaNameSource source1 = new DwcaNameSource(new File(this.getClass().getResource("dwca-3").getFile()));
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        this.taxonomy.createWorkingIndex();
+        this.taxonomy.resolveUnplacedVernacular();
+        this.taxonomy.buildPreferredVernacular();
+        this.output = FileUtils.mkTempDir("merged", "", null);
+        this.taxonomy.createDwCA(this.output);
+        File taxon = new File(this.output, "taxon.txt");
+        assertTrue(taxon.exists());
+        //this.dumpFile(taxon);
+        assertEquals(4, this.rowCount(taxon));
+        File vernacular = new File(this.output, "vernacularname.txt");
+        assertTrue(vernacular.exists());
+        // this.dumpFile(vernacular);
+        assertEquals(6, this.rowCount(vernacular));
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("https://biodiversity.org.au/afd/taxa/23f4784e-1116-482c-8e3e-b6b12733f588");
+        assertNotNull(tci1);
+        assertNotNull(tci1.getVernacularNames());
+        assertEquals(3, tci1.getVernacularNames().size());
+        Optional<VernacularName> vn1 = tci1.getVernacularNames().stream().filter(v -> v.isForbidden()).findFirst();
+        assertTrue(vn1.isPresent());
+        assertEquals("name:0007", vn1.get().getNameID());
     }
 
 

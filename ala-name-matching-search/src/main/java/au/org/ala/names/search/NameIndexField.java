@@ -102,7 +102,7 @@ public enum NameIndexField {
         }
         if (value == null)
             return;
-        this.type.store(value, name, document);
+        this.type.store(value, this.name, document);
     }
 
 

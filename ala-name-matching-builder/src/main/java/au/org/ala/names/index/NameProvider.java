@@ -516,13 +516,15 @@ public class NameProvider {
     }
 
     /**
-     * Get the default score.
+     * Get the default score for taxa.
      * <p>
      * If not set and there is a parent, get the parent default.
      * If nothing has been set, then return the {@link #DEFAULT_SCORE}
      * </p>
      *
      * @return The default score
+     *
+     * @see #getDefaultVernacularScore()
      */
     @JsonIgnore
     public int getDefaultScore() {
@@ -542,6 +544,8 @@ public class NameProvider {
      * </p>
      *
      * @return The default score
+     *
+     * @see #getDefaultScore()
      */
     @JsonIgnore
     public int getDefaultVernacularScore() {
