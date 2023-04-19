@@ -66,4 +66,26 @@ public interface Reporter {
      * @param associated The elements that impact the report.
      */
     void report(IssueType type, String code, TaxonomicElement main, List<? extends TaxonomicElement> associated);
+
+
+    /**
+     * Add a report.
+     * <p>
+     * Message codes are retrieved using a message bundle pointing to <code>taxonomy.properties</code>
+     * These are formatted with a message formatter and have the following arguments:
+     * </p>
+     * <ul>
+     *     <li>{0} The nameID of the vernacular name</li>
+     *     <li>{1} The vernacular name of the name</li>
+     *     <li>{2+} The associated information</li>
+     * </ul>
+     *
+     * @param type The type of report
+     * @param code The message code to use for the readable version of the report
+     * @param name The vernacular name
+     * @param associated The associated information
+     */
+    default void report(IssueType type, String code, VernacularName name, String... associated) {
+        this.report(type, code, name.getNameID(), name.getVernacularName(), associated);
+    }
 }

@@ -1,0 +1,3 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonConceptID,scientificNameID,taxonomicStatus,nomenclaturalStatus,establishmentMeans,nameAccordingToID,nameAccordingTo,namePublishedInID,namePublishedIn,namePubishedInYear,nameComplete,nameFormatted,source
+"https://biodiversity.org.au/afd/taxa/340484bd-33f6-4b46-a63c-751f0b159ed1","","","dr120","ICZN","Hoplostethus atlanticus","Collett, 1889","species","","","accepted","","","","","","","","","",""
+"https://biodiversity.org.au/afd/taxa/23f4784e-1116-482c-8e3e-b6b12733f588","","","dr120","ICZN","Macropus giganteus","Shaw, 1790","species","","","accepted","","","","","","","","","",""

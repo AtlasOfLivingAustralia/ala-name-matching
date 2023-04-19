@@ -17,14 +17,13 @@
 package au.org.ala.names.index.provider;
 
 import au.org.ala.names.index.NameKey;
+import au.org.ala.names.index.NameProvider;
 import au.org.ala.names.index.TaxonConceptInstance;
+import au.org.ala.names.index.VernacularName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * File description.
- * <p>
- * More description.
- * </p>
+ * Make a conditional adjustment to a score
  *
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright &copy; 2017 Atlas of Living Australia
@@ -40,12 +39,48 @@ public class ScoreAdjustment {
     public ScoreAdjustment() {
     }
 
+    /**
+     * Construct an adjuster.
+     *
+     * @param condition The condition
+     * @param adjustment The adjustment to make
+     */
     public ScoreAdjustment(TaxonCondition condition, int adjustment) {
         this.condition = condition;
         this.adjustment = adjustment;
     }
 
-    public int adjust(int base, TaxonConceptInstance instance, NameKey key) {
-        return this.condition.match(instance, key) ? base + this.adjustment : base;
+    /**
+     * Adjust a score.
+     * <p>
+     * If the condition applies, then add the adjustment to the score, otherwise leave it alone.
+     * </p>
+     *
+     * @param base The base score
+     * @param instance The taxon instance
+     * @param key The name key
+     * @param provider The provider for match context
+     *
+     * @return The adjusted score
+     */
+    public int adjust(int base, TaxonConceptInstance instance, NameKey key, NameProvider provider) {
+        return this.condition.match(instance, key, provider) ? base + this.adjustment : base;
     }
+
+    /**
+     * Adjust a score.
+     * <p>
+     * If the condition applies, then add the adjustment to the score, otherwise leave it alone.
+     * </p>
+     *
+     * @param base The base score
+     * @param name The vernacular name
+     * @param provider The provider for match context
+     *
+     * @return The adjusted score
+     */
+    public int adjust(int base, VernacularName name, NameProvider provider) {
+        return this.condition.match(name, provider) ? base + this.adjustment : base;
+    }
+
 }

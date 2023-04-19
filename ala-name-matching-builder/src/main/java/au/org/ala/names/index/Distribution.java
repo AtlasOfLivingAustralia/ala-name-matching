@@ -83,14 +83,14 @@ public class Distribution {
         this.provider = taxonomy.resolveProvider(datasetID, datasetName);
         String locationID = record.value(DwcTerm.locationID);
         if (locationID != null) {
-            this.location = taxonomy.resolveLocation(locationID);
+            this.location = provider.findLocation(locationID);
         }
         String locality = record.value(DwcTerm.locality);
         if (this.location == null && locality != null) {
-            this.location = taxonomy.resolveLocation(locality);
+            this.location = provider.findLocation(locality);
         }
         if (this.location == null)
-            throw new IllegalArgumentException("Unrecognised locality " + locationID + "/" + locality);
+            throw new IllegalArgumentException("Unrecognised locality " + locationID + " = " + locality);
         String lifeStage = record.value(DwcTerm.lifeStage);
         this.lifeStage = taxonomy.resolveLifeStage(lifeStage);
         String occurrenceStatus = record.value(DwcTerm.occurrenceStatus);

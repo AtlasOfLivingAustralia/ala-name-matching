@@ -156,7 +156,7 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
      *
      * @param occurrenceStatus the occurrence status string
      *
-     * @return The canonicalised life stage, if present
+     * @return The occurrence status, if present
      */
     abstract public OccurrenceStatus canonicaliseOccurrenceStatus(String occurrenceStatus);
 

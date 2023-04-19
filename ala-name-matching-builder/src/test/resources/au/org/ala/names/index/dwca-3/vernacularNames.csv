@@ -1,0 +1,8 @@
+taxonID,nameID,datasetID,vernacularName,status,language
+"https://biodiversity.org.au/afd/taxa/340484bd-33f6-4b46-a63c-751f0b159ed1","name:0001","dr120","Deep-Sea Perch","common","en"
+"https://biodiversity.org.au/afd/taxa/340484bd-33f6-4b46-a63c-751f0b159ed1","name:0002","dr120","Orange Ruff","common","en-AU
+"https://biodiversity.org.au/afd/taxa/340484bd-33f6-4b46-a63c-751f0b159ed1","name:0003","dr120","Orange Roughy","standard",""
+"https://biodiversity.org.au/afd/taxa/340484bd-33f6-4b46-a63c-751f0b159ed1","name:0004","dr120","Badname","preferred",""
+"https://biodiversity.org.au/afd/taxa/23f4784e-1116-482c-8e3e-b6b12733f588","name:0005","dr120","Eastern Grey Kangaroo","common","en"
+"https://biodiversity.org.au/afd/taxa/23f4784e-1116-482c-8e3e-b6b12733f588","name:0006","dr120","Bandaarr","common","d23"
+"https://biodiversity.org.au/afd/taxa/23f4784e-1116-482c-8e3e-b6b12733f588","name:0007","dr120","Badname","common","en"

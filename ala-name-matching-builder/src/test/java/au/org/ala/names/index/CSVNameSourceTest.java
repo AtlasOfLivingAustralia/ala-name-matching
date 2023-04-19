@@ -81,8 +81,8 @@ public class CSVNameSourceTest extends TestUtils {
     public void testLoadLocations1() throws Exception {
         CSVNameSource source = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
         this.taxonomy.load(Arrays.asList(source));
-        this.taxonomy.resolveLocations();
-        Location location1 = this.taxonomy.resolveLocation("http://vocab.getty.edu/tgn/7000490");
+        this.taxonomy.postLocationLoad();
+        Location location1 = this.taxonomy.getDefaultProvider().findLocation("http://vocab.getty.edu/tgn/7000490");
         assertNotNull(location1);
         assertEquals("Australia", location1.getLocality());
         assertEquals("country", location1.getGeographyType());
@@ -91,7 +91,7 @@ public class CSVNameSourceTest extends TestUtils {
         assertNotNull(parent1);
         assertEquals("http://vocab.getty.edu/tgn/1000006", parent1.getLocationID());
         assertEquals("Oceania", parent1.getLocality());
-        Location location2 = this.taxonomy.resolveLocation("http://vocab.getty.edu/tgn/7002758");
+        Location location2 = this.taxonomy.getDefaultProvider().findLocation("http://vocab.getty.edu/tgn/7002758");
         assertEquals("Andalusia", location2.getLocality());
         assertEquals("stateProvince", location2.getGeographyType());
         assertEquals("http://vocab.getty.edu/tgn/1000095", location2.getParentLocationID());

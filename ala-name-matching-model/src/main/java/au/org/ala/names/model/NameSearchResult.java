@@ -43,6 +43,8 @@ public class NameSearchResult {
     private SynonymType synonymType; //store that type of synonym that this name is
     /** The match quality */
     private MatchMetrics matchMetrics;
+    /** The preferred vernacular name */
+    private String vernacularName;
 
     public NameSearchResult(String id, String lsid, MatchType type) {
         this.id = id;//Long.parseLong(id);
@@ -64,9 +66,10 @@ public class NameSearchResult {
      * @param rank The rank
      * @param type The match type
      * @param synonymType The synonym type
+     * @param vernacularName Any preferred vernacular name
      * @param priority An optional match priority
      */
-    public NameSearchResult(String id, String lsid, String acceptedLsid, String left, String right, LinnaeanRankClassification rankClass, RankType rank, MatchType type, SynonymType synonymType, Integer priority) {
+    public NameSearchResult(String id, String lsid, String acceptedLsid, String left, String right, LinnaeanRankClassification rankClass, RankType rank, MatchType type, SynonymType synonymType, String vernacularName, Integer priority) {
         this(id, lsid, type);
         this.acceptedLsid = acceptedLsid;
         this.left = left;
@@ -74,6 +77,7 @@ public class NameSearchResult {
         this.rankClass = rankClass;
         this.rank = rank;
         this.synonymType = synonymType;
+        this.vernacularName = vernacularName;
         if (priority != null)
             this.matchMetrics.setPriority(priority);
     }
@@ -196,6 +200,9 @@ public class NameSearchResult {
         if(matchType !=null) {
             map.put("Match type", matchType.toString());
         }
+        if (vernacularName != null) {
+            map.put("Vernacular name", vernacularName);
+        }
         return map;
     }
 
@@ -230,6 +237,15 @@ public class NameSearchResult {
      */
     public MatchMetrics getMatchMetrics() {
         return matchMetrics;
+    }
+
+    /**
+     * Get the preferred vernacular name, if any
+     *
+     * @return The preferred vernacular name
+     */
+    public String getVernacularName() {
+        return vernacularName;
     }
 
     /**

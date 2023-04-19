@@ -17,7 +17,9 @@
 package au.org.ala.names.index.provider;
 
 import au.org.ala.names.index.NameKey;
+import au.org.ala.names.index.NameProvider;
 import au.org.ala.names.index.TaxonConceptInstance;
+import au.org.ala.names.index.VernacularName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
@@ -56,13 +58,30 @@ public class AndTaxonCondition extends TaxonCondition {
      * </p>
      * @param key The associated name key
      * @param instance The instance to match
+     * @param provider The provider for match context
      *
      * @return True if all conditions match.
      */
     @Override
-    public boolean match(TaxonConceptInstance instance, NameKey key) {
-        return this.and.stream().allMatch(c -> c.match(instance, key));
+    public boolean match(TaxonConceptInstance instance, NameKey key, NameProvider provider) {
+        return this.and.stream().allMatch(c -> c.match(instance, key, provider));
     }
+
+    /**
+     * See if an vernacular name matches.
+     * <p>
+     * All sub-conditions need to match for this condition to be true.
+     * </p>
+     * @param name The vernacular name
+     * @param provider The provider for match context
+     *
+     * @return True if all conditions match.
+     */
+    @Override
+    public boolean match(VernacularName name, NameProvider provider) {
+        return this.and.stream().allMatch(c -> c.match(name, provider));
+    }
+
 
     /**
      * Provide a string explanation of the condition

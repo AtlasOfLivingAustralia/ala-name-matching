@@ -305,6 +305,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             String infraspecificEpithet = record.value(DwcTerm.infraspecificEpithet);
             String rank = record.value(DwcTerm.taxonRank);
             String language = record.value(DcTerm.language);
+            Integer priority = this.getIntegerValue(record, ALATerm.priority);
             LinnaeanRankClassification classification = new LinnaeanRankClassification();
             NameSearchResult result = null;
             String lsid;
@@ -339,7 +340,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             lsid = result.getAcceptedLsid() != null ? result.getAcceptedLsid() : result.getLsid();
             if (scientificName == null)
                 scientificName = result.getRankClassification().getScientificName();
-            Document doc = this.createCommonNameDocument(vernacularName, scientificName, lsid, language, false);
+            Document doc = this.createCommonNameDocument(vernacularName, scientificName, lsid, language, priority, false);
             this.vernacularIndexWriter.addDocument(doc);
         }
         this.sources.add(archive.getMetadata());
@@ -375,7 +376,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 TopDocs result = getLoadIdxResults(null, "lsid", lsid, 1);
                 if(result.totalHits.value > 0){
                     //we can add the common name
-                    Document doc = createCommonNameDocument(values[3], values[2], lsid, values[4], false);
+                    Document doc = createCommonNameDocument(values[3], values[2], lsid, values[4], null,false);
                     this.vernacularIndexWriter.addDocument(doc);
                     count++;
                 }
@@ -407,6 +408,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             String taxonID = record.id();
             String vernacularName = record.value(DwcTerm.vernacularName);
             String language = record.value(DcTerm.language);
+            Integer priority = this.getIntegerValue(record, ALATerm.priority);
             TopDocs result = getLoadIdxResults(null, "lsid", taxonID, 1);
             if(result.totalHits.value > 0){
                 Document sciNameDoc = lsearcher.doc(result.scoreDocs[0].doc);
@@ -417,6 +419,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                         sciNameDoc.get(NameIndexField.NAME.toString()),
                         taxonID,
                         language,
+                        priority,
                         false);
                 this.vernacularIndexWriter.addDocument(doc);
                 count++;
@@ -428,6 +431,25 @@ public class DwcaNameIndexer extends ALANameIndexer {
         log.info("Finished processing " + i + " common names with " + count + " added to index");
         this.vernacularIndexWriter.commit();
         this.vernacularIndexWriter.forceMerge(1);
+    }
+
+    /**
+     * Get an ineteger from a DwCA record
+     * 
+     * @param record The record
+     * @param term The term to get
+     *             
+     * @return A parsed integer ort null for none/no value/unparsable
+     */
+    protected Integer getIntegerValue(Record record, org.gbif.dwc.terms.Term term) {
+        String value = StringUtils.trimToNull(record.value(term));
+        if (value == null)
+            return null;
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
     }
 
 
@@ -518,59 +540,37 @@ public class DwcaNameIndexer extends ALANameIndexer {
             String taxonRank = core.value(DwcTerm.taxonRank);
             String datasetID = core.value(DwcTerm.datasetID);
             nameComplete = this.buildNameComplete(scientificName, scientificNameAuthorship, nameComplete);
+            String commonName = core.value(DwcTerm.vernacularName);
             //add and store the identifier for the record
-            doc.add(new StringField(NameIndexField.ID.toString(), id, Field.Store.YES));
+            NameIndexField.ID.index(id, doc);
             if(StringUtils.isNotBlank(taxonID)){
-                doc.add(new StringField(NameIndexField.LSID.toString(), taxonID, Field.Store.YES));
+                NameIndexField.LSID.index(taxonID, doc);
             } else {
                 System.out.println("LSID is null for " + id + " " + taxonID + " " + taxonID + " " + acceptedNameUsageID);
             }
-            if(StringUtils.isNotBlank(parentNameUsageID)) {
-                doc.add(new StringField("parent_id", parentNameUsageID, Field.Store.YES));
-            }
-            if(StringUtils.isNotBlank(acceptedNameUsageID)) {
-                doc.add(new StringField(NameIndexField.ACCEPTED.toString(),acceptedNameUsageID, Field.Store.YES));
-            }
-            if(StringUtils.isNotBlank(scientificName)) {
-                //stored no need to search on
-                doc.add(new StoredField(NameIndexField.NAME.toString(),scientificName));
-            }
-            if(StringUtils.isNotBlank(scientificNameAuthorship)) {
-                //stored no need to search on
-                doc.add(new StoredField(NameIndexField.AUTHOR.toString(),scientificNameAuthorship));
-            }
-            if (StringUtils.isNotBlank(nameComplete)) {
-                doc.add(new StoredField(NameIndexField.NAME_COMPLETE.toString(), nameComplete));
-            }
-            if(StringUtils.isNotBlank(genus)) {
-                //stored no need to search on
-                doc.add(new StoredField(NameIndexField.GENUS.toString(),genus));
-            }
-            if(StringUtils.isNotBlank(specificEpithet)) {
-                //stored no need to search on
-                doc.add(new StoredField(NameIndexField.SPECIFIC.toString(),specificEpithet));
-            }
-            if(StringUtils.isNotBlank(infraspecificEpithet)) {
-                //stored no need to search on
-                doc.add(new StoredField(NameIndexField.INFRA_SPECIFIC.toString(),infraspecificEpithet));
-            }
+            NameIndexField.PARENT_ID.index(parentNameUsageID, doc);
+            NameIndexField.ACCEPTED.index(acceptedNameUsageID, doc);
+            NameIndexField.NAME.index(scientificName, doc);
+            NameIndexField.AUTHOR.store(scientificNameAuthorship, doc);
+            NameIndexField.NAME_COMPLETE.index(nameComplete, doc);
+            NameIndexField.COMMON_NAME.index(commonName, doc);
+            NameIndexField.GENUS.store(genus, doc);
+            NameIndexField.SPECIFIC.store(specificEpithet, doc);
+            NameIndexField.INFRA_SPECIFIC.store(infraspecificEpithet, doc);
             if(StringUtils.isNotBlank(taxonRank)){
                 //match the supplied rank
                 RankType rt = RankType.getForStrRank(taxonRank);
                 if(rt != null){
-                    doc.add(new StringField(NameIndexField.RANK.toString(), rt.getRank(), Field.Store.YES));
-                    doc.add(new IntPoint(NameIndexField.RANK_ID.toString(), rt.getId()));
-                    doc.add(new StoredField(NameIndexField.RANK_ID.toString(), rt.getId()));
+                    NameIndexField.RANK.index(rt.getRank(), doc);
+                    NameIndexField.RANK_ID.index(rt.getId(), doc);
                 } else {
-                    doc.add(new StringField(NameIndexField.RANK.toString(), taxonRank, Field.Store.YES));
-                    doc.add(new IntPoint(NameIndexField.RANK_ID.toString(), RankType.UNRANKED.getId()));
-                    doc.add(new StoredField(NameIndexField.RANK_ID.toString(), RankType.UNRANKED.getId()));
+                    NameIndexField.RANK.index(taxonRank, doc);
+                    NameIndexField.RANK_ID.index(RankType.UNRANKED.getId(), doc);
                 }
             } else {
                 //put in unknown rank
-                doc.add(new StringField(NameIndexField.RANK.toString(), "Unknown", Field.Store.YES));
-                doc.add(new IntPoint(NameIndexField.RANK_ID.toString(), RankType.UNRANKED.getId()));
-                doc.add(new StoredField(NameIndexField.RANK_ID.toString(), RankType.UNRANKED.getId()));
+                NameIndexField.RANK.index("Unknown", doc);
+                NameIndexField.RANK_ID.index(RankType.UNRANKED.getId(), doc);
             }
             if(StringUtils.equals(taxonID, acceptedNameUsageID) || StringUtils.equals(id, acceptedNameUsageID) || acceptedNameUsageID == null){
                 //mark this one as an accepted concept
@@ -581,9 +581,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             } else {
                 doc.add(new StringField(NameIndexField.iS_SYNONYM.toString(),"T", Field.Store.YES));
             }
-            if (StringUtils.isNotBlank(datasetID)) {
-                doc.add(new StoredField(NameIndexField.DATASET_ID.toString(), datasetID));
-            }
+            NameIndexField.DATASET_ID.store(datasetID, doc);
 
             // Add score and variant information
             List<Record> variants = dwcr.extension(ALATerm.TaxonVariant);
@@ -592,9 +590,9 @@ public class DwcaNameIndexer extends ALANameIndexer {
             Set<String> otherNames = new HashSet<>();
             if (variants != null) {
                 for (Record variant: variants) {
-                    String priority = variant.value(ALATerm.priority);
+                    Integer priority = this.getIntegerValue(variant, ALATerm.priority);
                     if (priority != null)
-                        score = Math.max(score, Integer.parseInt(priority));
+                        score = Math.max(score, priority);
                     String sn = variant.value(DwcTerm.scientificName);
                     String sna = variant.value(DwcTerm.scientificNameAuthorship);
                     String nc  = variant.value(ALATerm.nameComplete);
@@ -606,9 +604,9 @@ public class DwcaNameIndexer extends ALANameIndexer {
                         otherNames.add(locality.group(1).trim());
                 }
             }
-            doc.add(new StoredField(NameIndexField.PRIORITY.toString(), score < 0 ? defaultScore : score));
+            NameIndexField.PRIORITY.store(score < 0 ? defaultScore : score, doc);
             for (String name: otherNames)
-                doc.add(new StoredField(NameIndexField.OTHER_NAMES.toString(), name));
+                NameIndexField.OTHER_NAMES.store(name, doc);
 
 
             this.loadingIndexWriter.addDocument(doc);
@@ -721,6 +719,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         String name = doc.get(NameIndexField.NAME.toString());
         String nameComplete = doc.get(NameIndexField.NAME_COMPLETE.toString());
         String lsid = doc.get(NameIndexField.LSID.toString());
+        String commonName = doc.get(NameIndexField.CONCAT_NAME.toString());
          //get the canonical version if the sciname
         String cname = name;
         ParsedName pn = null;
@@ -841,6 +840,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 right,
                 newcl,
                 nameComplete,
+                commonName,
                 otherNames,
                 score);
         writer.addDocument(indexDoc);
@@ -877,7 +877,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
 
     // Extended to allow use of the accepted information when filling out higher taxonomy
     @Override
-    protected Document createALASynonymDocument(String scientificName, String author, String nameComplete, Collection<String> otherNames, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, int priority, String synonymType) {
+    protected Document createALASynonymDocument(String scientificName, String author, String nameComplete, Collection<String> otherNames, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, int priority, String synonymType, String commonName) {
         lsid = StringUtils.isBlank(lsid) ? nameLsid : lsid;
         Document accepted = null;
         String kingdom = null;
@@ -888,7 +888,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         String genus = null;
         String specificEpithet = null;
         String infraspecificEpithet = null;
-         try {
+        try {
             TopDocs hits = this.cbSearcher.search(new TermQuery(new Term(NameIndexField.LSID.toString(), acceptedLsid)), 1);
             if (hits.totalHits.value > 0)
                 accepted = this.cbSearcher.doc(hits.scoreDocs[0].doc);
@@ -923,10 +923,10 @@ public class DwcaNameIndexer extends ALANameIndexer {
         }
         Document doc = createALAIndexDocument(scientificName, id, lsid, null, null,
                 kingdom, null, phylum, null, clazz, null, order, null, family, null, genus, null, null, null, 0, 0,
-                acceptedLsid, specificEpithet, infraspecificEpithet, author, nameComplete, otherNames, priority);
+                acceptedLsid, specificEpithet, infraspecificEpithet, author, nameComplete, commonName, otherNames, priority);
         if (doc != null && synonymType != null) {
             try {
-                doc.add(new TextField(NameIndexField.SYNONYM_TYPE.toString(), synonymType, Field.Store.YES));
+                NameIndexField.SYNONYM_TYPE.index(synonymType, doc);
             } catch (Exception e) {
                 System.out.println("Error on " + scientificName + " " + author + " " + id + ".  " + e.getMessage());
             }
@@ -976,6 +976,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             nameComplete = this.buildNameComplete(scientificName, scientificNameAuthorship, nameComplete);
             String datasetID = core.value(DwcTerm.datasetID);
             String taxonomicStatus = core.value(DwcTerm.taxonomicStatus);
+            String commonName = core.value(DwcTerm.vernacularName);
             if(StringUtils.isNotEmpty(acceptedNameUsageID) && (!StringUtils.equals(acceptedNameUsageID , id) && !StringUtils.equals(acceptedNameUsageID, lsid))){
                 count++;
                 // Get information from the variants
@@ -1012,8 +1013,9 @@ public class DwcaNameIndexer extends ALANameIndexer {
                             acceptedNameUsageID,
                             acceptedNameUsageID,
                             score < 0 ? defaultScore : score,
-                            taxonomicStatus);
-
+                            taxonomicStatus,
+                            commonName
+                    );
                     if(doc != null){
                         writer.addDocument(doc);
                         this.idMap.put(lsid, new Usage(lsid, scientificName, taxonomicStatus, acceptedNameUsageID));

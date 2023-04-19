@@ -61,7 +61,19 @@ abstract public class FieldType<T> {
     }
 
     /**
-     * Store a field into a lucene document.
+     * Store a searchable field into a lucene document.
+     * <p>
+     * This may involve storing multiple lucene fields for range types.
+     * </p>
+     *
+     * @param value The value to store
+     * @param name The name of the field
+     * @param document The document to add the field to
+     */
+    abstract public void index(T value, String name, Document document);
+
+    /**
+     * Store a non-searchable field into a lucene document.
      * <p>
      * This may involve storing multiple lucene fields for range types.
      * </p>
@@ -102,7 +114,12 @@ abstract public class FieldType<T> {
     /**
      * Store-only field.
      */
-    public static final FieldType<String> STORE = new FieldType<String>(String.class,"store") {
+        public static final FieldType<String> STORE = new FieldType<String>(String.class,"store") {
+        @Override
+        public void index(String value, String name, Document document) {
+            document.add(new StoredField(name, value));
+        }
+
         @Override
         public void store(String value, String name, Document document) {
             document.add(new StoredField(name, value));
@@ -122,8 +139,13 @@ abstract public class FieldType<T> {
      */
     public static final FieldType<String> IDENTIFIER = new FieldType<String>(String.class,"identifier") {
         @Override
-        public void store(String value, String name, Document document) {
+        public void index(String value, String name, Document document) {
             document.add(new StringField(name, value, Field.Store.YES));
+        }
+
+        @Override
+        public void store(String value, String name, Document document) {
+            document.add(new StoredField(name, value));
         }
 
         @Override
@@ -140,9 +162,14 @@ abstract public class FieldType<T> {
      */
     public static final FieldType<String> TERM = new FieldType<String>(String.class, "term") {
         @Override
-        public void store(String value, String name, Document document) {
+        public void index(String value, String name, Document document) {
             Field field = new Field(name, value, TERM_FIELD_TYPE.get());
             document.add(field);
+        }
+
+        @Override
+        public void store(String value, String name, Document document) {
+            document.add(new StoredField(name, value));
         }
 
         @Override
@@ -160,8 +187,13 @@ abstract public class FieldType<T> {
     public static final FieldType<String> TEXT = new FieldType<String>(String.class, "text") {
 
         @Override
-        public void store(String value, String name, Document document) {
+        public void index(String value, String name, Document document) {
             document.add(new TextField(name, value, Field.Store.YES));
+        }
+
+        @Override
+        public void store(String value, String name, Document document) {
+            document.add(new StoredField(name, value));
         }
 
         @Override
@@ -179,9 +211,14 @@ abstract public class FieldType<T> {
      */
     public static final FieldType<String> COMMON = new FieldType<String>(String.class,"common") {
         @Override
-        public void store(String value, String name, Document document) {
+        public void index(String value, String name, Document document) {
             value = value.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", "");
             document.add(new StringField(name, value, Field.Store.YES));
+        }
+
+        @Override
+        public void store(String value, String name, Document document) {
+            document.add(new StoredField(name, value));
         }
 
         @Override
@@ -199,8 +236,13 @@ abstract public class FieldType<T> {
      */
     public static final FieldType<Integer> INTEGER = new FieldType<Integer>(Integer.class, "integer") {
         @Override
-        public void store(Integer value, String name, Document document) {
+        public void index(Integer value, String name, Document document) {
             document.add(new IntPoint(name, value));
+            document.add(new StoredField(name, value));
+        }
+
+        @Override
+        public void store(Integer value, String name, Document document) {
             document.add(new StoredField(name, value));
         }
 
@@ -231,8 +273,13 @@ abstract public class FieldType<T> {
      */
     public static final FieldType<Double> DOUBLE = new FieldType<Double>(Double.class, "double") {
         @Override
-        public void store(Double value, String name, Document document) {
+        public void index(Double value, String name, Document document) {
             document.add(new DoublePoint(name, value));
+            document.add(new StoredField(name, value));
+        }
+
+        @Override
+        public void store(Double value, String name, Document document) {
             document.add(new StoredField(name, value));
         }
 

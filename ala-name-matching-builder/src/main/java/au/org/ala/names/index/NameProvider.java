@@ -70,6 +70,9 @@ public class NameProvider {
     /** The default source score */
     @JsonProperty
     private Integer defaultScore;
+    /** The default vernacular score */
+    @JsonProperty
+    private Integer defaultVernacularScore;
     /** Any additional priorities for this provider, based on name */
     @JsonProperty
     private Map<String, Integer> scores;
@@ -79,6 +82,9 @@ public class NameProvider {
     /** Score adjustments */
     @JsonProperty
     private ScoreAdjuster adjuster;
+    /** Vernacular score adjustments */
+    @JsonProperty
+    private ScoreAdjuster vernacularAdjuster;
     /** Key adjustments */
     @JsonProperty
     private KeyAdjuster keyAdjuster;
@@ -117,6 +123,9 @@ public class NameProvider {
     private Map<String, String> scientificNameAuthorshipChanges;
     @JsonProperty
     private RankType distributionCutoff;
+    /** The location resolver */
+    @JsonIgnore
+    private LocationResolver locationResolver;
     /** Reporter for any problems */
     @JsonIgnore
     private Reporter reporter;
@@ -132,10 +141,12 @@ public class NameProvider {
         this.licence = null;
         this.parent = null;
         this.defaultScore = null;
+        this.defaultVernacularScore = null;
         this.defaultNomenclaturalCode = null;
         this.scores = new HashMap<>();
         this.owner = new HashSet<>();
         this.adjuster = new ScoreAdjuster();
+        this.vernacularAdjuster = new ScoreAdjuster();
         this.keyAdjuster = new KeyAdjuster();
         this.loose = false;
         this.external = true;
@@ -143,10 +154,11 @@ public class NameProvider {
         this.scientificNameChanges = new HashMap<>();
         this.scientificNameAuthorshipChanges = new HashMap<>();
         this.distributionCutoff = null;
+        this.locationResolver = new LocationResolver();
         this.reporter = new LogReporter();
     }
     
-     public NameProvider(String id, Integer defaultScore, String unknownTaxonID, Map<String, Integer> scores) {
+     public NameProvider(String id, Integer defaultScore, Integer defaultVernacularScore, String unknownTaxonID, Map<String, Integer> scores) {
         this.id = id;
         this.name = this.id;
         this.description = null;
@@ -154,10 +166,12 @@ public class NameProvider {
         this.licence = null;
         this.parent = null;
         this.defaultScore= defaultScore;
+        this.defaultVernacularScore = defaultVernacularScore;
         this.defaultNomenclaturalCode = null;
         this.scores = scores;
         this.owner = new HashSet<>();
         this.adjuster = new ScoreAdjuster();
+        this.vernacularAdjuster = new ScoreAdjuster();
         this.keyAdjuster = new KeyAdjuster();
         this.loose = false;
         this.external = true;
@@ -166,6 +180,7 @@ public class NameProvider {
         this.scientificNameChanges = new HashMap<>();
         this.scientificNameAuthorshipChanges = new HashMap<>();
         this.distributionCutoff = null;
+        this.locationResolver = new LocationResolver();
         this.reporter = new LogReporter();
     }
 
@@ -187,10 +202,12 @@ public class NameProvider {
         this.licence = null;
         this.parent = parent;
         this.defaultScore = parent.getDefaultScore();
+        this.defaultVernacularScore = parent.getDefaultVernacularScore();
         this.defaultNomenclaturalCode = null;
         this.scores = new HashMap<>();
         this.owner = new HashSet<>();
         this.adjuster = new ScoreAdjuster();
+        this.vernacularAdjuster = new ScoreAdjuster();
         this.keyAdjuster = new KeyAdjuster();
         this.loose = loose;
         this.external = true;
@@ -198,6 +215,7 @@ public class NameProvider {
         this.scientificNameChanges = new HashMap<>();
         this.scientificNameAuthorshipChanges = new HashMap<>();
         this.distributionCutoff = null;
+        this.locationResolver = new LocationResolver();
         this.reporter = new LogReporter();
     }
 
@@ -208,7 +226,7 @@ public class NameProvider {
      * @param defaultScore The default source priority
      */
     public NameProvider(String id, int defaultScore) {
-        this(id, defaultScore, DEFAULT_UNKNOWN_TAXON_ID, Collections.EMPTY_MAP);
+        this(id, defaultScore, defaultScore, DEFAULT_UNKNOWN_TAXON_ID, Collections.EMPTY_MAP);
     }
 
     /**
@@ -276,6 +294,17 @@ public class NameProvider {
      */
     public NameProvider getParent() {
         return parent;
+    }
+
+    /**
+     * Get the top level provider.
+     *
+     * @return The provider, relative to this one, that has no parent.
+     */
+    public NameProvider getTopProivder() {
+        if (this.parent == null)
+            return this;
+        return this.parent.getTopProivder();
     }
 
     /**
@@ -449,7 +478,25 @@ public class NameProvider {
         String explain;
         if (this.parent != null && ((explain = this.parent.forbid(instance, key)) != null))
             return explain;
-        return this.adjuster.forbid(instance, key);
+        return this.adjuster.forbid(instance, key, this);
+    }
+
+
+    /**
+     * Decide whether to forbid a vernacular name.
+     * <p>
+     * If there is a parent provider, then check the parent, as well.
+     * </p>
+     *
+     * @param name The vernacular name
+     *
+     * @return True if the name is forbidden
+     */
+    public String forbid(VernacularName name) {
+        String explain;
+        if (this.parent != null && ((explain = this.parent.forbid(name)) != null))
+            return explain;
+        return this.vernacularAdjuster.forbid(name, this);
     }
 
     /**
@@ -469,13 +516,15 @@ public class NameProvider {
     }
 
     /**
-     * Get the default score.
+     * Get the default score for taxa.
      * <p>
      * If not set and there is a parent, get the parent default.
      * If nothing has been set, then return the {@link #DEFAULT_SCORE}
      * </p>
      *
      * @return The default score
+     *
+     * @see #getDefaultVernacularScore()
      */
     @JsonIgnore
     public int getDefaultScore() {
@@ -485,6 +534,28 @@ public class NameProvider {
             return this.parent.getDefaultScore();
         return DEFAULT_SCORE;
     }
+
+
+    /**
+     * Get the default vernacular core.
+     * <p>
+     * If not set and there is a parent, get the parent default.
+     * If nothing has been set, then return the {@link #DEFAULT_SCORE}
+     * </p>
+     *
+     * @return The default score
+     *
+     * @see #getDefaultScore()
+     */
+    @JsonIgnore
+    public int getDefaultVernacularScore() {
+        if (this.defaultVernacularScore != null)
+            return this.defaultVernacularScore;
+        if (this.parent != null)
+            return this.parent.getDefaultVernacularScore();
+        return DEFAULT_SCORE;
+    }
+
 
     /**
      * Get the default nomeclatural code.
@@ -544,7 +615,6 @@ public class NameProvider {
         }
         int score = p != null && p.getProvider() == this ? p.getBaseScore(original) : this.getDefaultScore();
         return Math.max(TaxonomicElement.MIN_SCORE, Math.min(TaxonomicElement.MAX_SCORE, score));
-
     }
 
     /**
@@ -571,6 +641,39 @@ public class NameProvider {
     }
 
     /**
+     * Compute a base score for an vernacular name.
+     *
+     * @param name The vernacular name
+     *
+     * @return The instance score
+     */
+    public int computeBaseScore(VernacularName name) {
+        Integer specific = this.getSpecificScore(name.getVernacularName());
+        if (specific != null)
+            return specific;
+        return this.getDefaultVernacularScore();
+    }
+
+
+    /**
+     * Compute a score for a vernacular name.
+     * <p>
+     * We start with the base score and apply adjustments based on the status, language etc.
+     * </p>
+     *
+     * @param name The vernacular name
+     *
+     * @return The name score
+     */
+    public int computeScore(VernacularName name) {
+        if (name.isForbidden())
+            return TaxonomicElement.MIN_SCORE;
+        int score = name.getBaseScore();
+        score = this.adjustScore(score, name);
+        return Math.max(TaxonomicElement.MIN_SCORE, Math.min(TaxonomicElement.MAX_SCORE, score));
+    }
+
+    /**
      * Adjust a score.
      * <p>
      * Any parent provider adjustments are applied, followed
@@ -585,7 +688,26 @@ public class NameProvider {
     public int adjustScore(int score, TaxonConceptInstance instance) {
         if (this.parent != null)
             score = this.parent.adjustScore(score, instance);
-        return this.adjuster == null ? score : this.adjuster.score(score, instance, instance.getContainer() == null ? null : instance.getContainer().getKey());
+        return this.adjuster == null ? score : this.adjuster.score(score, instance, instance.getContainer() == null ? null : instance.getContainer().getKey(), this);
+    }
+
+
+    /**
+     * Adjust a score.
+     * <p>
+     * Any parent provider adjustments are applied, followed
+     * by any local adjustments.
+     * </p>
+     *
+     * @param score The current score
+     * @param name The vernacular name
+     *
+     * @return The adjusted score
+     */
+    public int adjustScore(int score, VernacularName name) {
+        if (this.parent != null)
+            score = this.parent.adjustScore(score, name);
+        return this.vernacularAdjuster == null ? score : this.vernacularAdjuster.score(score, name, this);
     }
 
     /**
@@ -603,7 +725,7 @@ public class NameProvider {
     public NameKey adjustKey(NameKey key, TaxonConceptInstance instance) {
         if (this.parent != null)
             key = this.parent.adjustKey(key, instance);
-        return this.keyAdjuster == null ? key : this.keyAdjuster.adjustKey(key, instance);
+        return this.keyAdjuster == null ? key : this.keyAdjuster.adjustKey(key, instance, this);
     }
 
     /**
@@ -657,7 +779,7 @@ public class NameProvider {
                 return false;
             }
         } catch (IndexBuilderException ex) {
-            taxonomy.report(IssueType.ERROR, "provider.validation.unknownTaxonID.noID", null, null);
+            taxonomy.report(IssueType.ERROR, "provider.validation.unknownTaxonID.noID", "", null);
             return false;
         }
         return true;
@@ -715,6 +837,29 @@ public class NameProvider {
     }
 
     /**
+     * Add a location to the providers location resolver.
+     *
+     * @param location The location to add
+     */
+    public void addLocation(Location location) {
+        this.locationResolver.add(location);
+    }
+
+    /**
+     * Find a location.
+     *
+     * @param key The location identifier, name, abbreviation etc.
+     *
+     * @return The matching location or null for not found
+     */
+    public Location findLocation(String key) {
+        Location location = this.locationResolver.get(key);
+        if (location == null && this.parent != null)
+            location = this.parent.findLocation(key);
+        return location;
+    }
+
+    /**
      * Find the default parent for an instance.
      *
      * @param taxonomy The base taxonomy
@@ -731,5 +876,14 @@ public class NameProvider {
             return null;
 
         return taxonomy.findElement(code, dp, this, null);
+    }
+
+    /**
+     * After all locations have been loaded, work out what's what.
+     *
+     * @return The number of locations resolved
+     */
+    public int postLocationLoad() {
+        return this.locationResolver.resolve();
     }
 }

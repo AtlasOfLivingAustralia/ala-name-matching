@@ -19,6 +19,7 @@ package au.org.ala.names.index;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonFlag;
 import au.org.ala.names.model.TaxonomicType;
+import au.org.ala.names.model.VernacularType;
 import au.org.ala.vocab.ALATerm;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
@@ -265,7 +266,7 @@ public class CSVNameSource extends NameSource {
                 String dist = this.get(record, distributionIndex);
                 if (dist != null) {
                     distribution = Arrays.stream(dist.split("\\|"))
-                            .map(id -> taxonomy.resolveLocation(id))
+                            .map(id -> provider.findLocation(id))
                             .filter(Objects::nonNull)
                             .map(l -> new Distribution(provider, l, null, null, null))
                             .collect(Collectors.toList());
@@ -295,7 +296,9 @@ public class CSVNameSource extends NameSource {
                         provenance,
                         classification,
                         flags,
-                        distribution);
+                        distribution,
+                        null
+                );
                 instance.normalise();
                 instance = taxonomy.addInstance(instance);
                 Document doc = new Document();
@@ -326,14 +329,61 @@ public class CSVNameSource extends NameSource {
     public void loadVernacular(Taxonomy taxonomy) throws IndexBuilderException {
         final Map<Term, Integer> termLocations = this.termLocations; // Lambda requires final local variable
         taxonomy.addOutputTerms(GbifTerm.VernacularName, this.terms);
+        Integer nameIDIndex = termLocations.get(ALATerm.nameID);
+        Integer vernacularNameIndex = termLocations.get(DwcTerm.vernacularName);
+        Integer statusIndex = termLocations.get(ALATerm.status);
+        Integer preferredIndex = termLocations.get(GbifTerm.isPreferredName);
+        Integer languageIndex = termLocations.get(DcTerm.language);
+        Integer locationIDIndex = termLocations.get(DwcTerm.locationID);
+        Integer localityIndex = termLocations.get(DwcTerm.locality);
+        Integer countryCodeIndex = termLocations.get(DwcTerm.countryCode);
+        Integer datasetIDIndex = termLocations.get(DwcTerm.datasetID);
+        Integer datasetNameIndex = termLocations.get(DwcTerm.datasetName);
+        Integer taxonRemarksIndex = termLocations.get(DwcTerm.taxonRemarks);
+        Integer provenanceIndex = termLocations.get(DcTerm.provenance);
         try {
             String[] r;
 
             while ((r = this.reader.readNext()) != null) {
                 final String[] record = r;
+                String nameID = this.get(record, nameIDIndex);
+                String vernacularName = this.get(record, vernacularNameIndex);
+                VernacularType status = VernacularType.forTerm(this.get(record, statusIndex), VernacularType.COMMON);
+                boolean preferred = this.getBoolean(record, preferredIndex);
+                String language = this.get(record, languageIndex);
+                NameProvider provider = taxonomy.resolveProvider(this.get(record, datasetIDIndex), this.get(record, datasetNameIndex));
+                Location location = null;
+                String locationID = this.get(record, locationIDIndex);
+                if (locationID != null)
+                    location = provider.findLocation(locationID);
+                String locality = this.get(record, localityIndex);
+                if (location == null && locality != null)
+                    location = provider.findLocation(locality);
+                String countryCode = this.get(record, countryCodeIndex);
+                if (location == null && countryCode != null)
+                    location = provider.findLocation(countryCode);
+                String verbatimTaxonRemarks = this.get(record, taxonRemarksIndex);
+                String verbatimProvenance = this.get(record, provenanceIndex);
+                List<String> taxonRemarks = verbatimTaxonRemarks == null || verbatimTaxonRemarks.isEmpty() ? null : Arrays.stream(verbatimTaxonRemarks.split("\\|")).map(s -> s.trim()).collect(Collectors.toList());
+                List<String> provenance = verbatimProvenance == null || verbatimProvenance.isEmpty() ? null : Arrays.stream(verbatimProvenance.split("\\|")).map(s -> s.trim()).collect(Collectors.toList());
+                Map<Term, Optional<String>> classification = null;
+                VernacularName name = taxonomy.addVernacular(new VernacularName(
+                        nameID,
+                        vernacularName,
+                        status,
+                        preferred,
+                        language,
+                        location,
+                        provider,
+                        taxonRemarks,
+                        provenance,
+                        null,
+                        null,
+                        false
+                ));
                 Document doc = new Document();
-                doc.add(new StringField("type", ALATerm.UnplacedVernacularName.qualifiedName(), Field.Store.YES));
-                doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
+                doc.add(new StringField("type", GbifTerm.VernacularName.qualifiedName(), Field.Store.YES));
+                doc.add(new StringField("id", name.getId(), Field.Store.YES));
                 for (int i = 0; i < record.length; i++) {
                     Term term = this.terms.get(i);
                     String value = record[i];
@@ -372,7 +422,7 @@ public class CSVNameSource extends NameSource {
                 String parentLocationID = this.get(record, parentLocationIDIndex);
                 String locality = this.get(record, localityIndex);
                 String geographyType = this.get(record, geographyTypeIndex);
-                Location location = new Location(locationID, parentLocationID, locality, geographyType);
+                Location location = new Location(locationID, parentLocationID, locality, geographyType, 1.0, Collections.emptyList(), Collections.emptyList());
                 taxonomy.addLocation(location);
              }
         } catch (IndexBuilderException ex) {
@@ -431,5 +481,26 @@ public class CSVNameSource extends NameSource {
             return null;
         s = s.trim();
         return s.isEmpty() ? null : s;
+    }
+
+    /**
+     * Get a boolean value from a record.
+     * <p>
+     * If the value is true, t, yes or y then return true, otherwise return false (including nulls)
+     * </p>
+     *
+     * @param record The record
+     * @param index The column index
+     *
+     * @return True if the column contains a "true" value
+     */
+    private boolean getBoolean(String[] record, Integer index) {
+        String value = this.get(record, index);
+        if (value == null)
+            return false;
+        return value.equalsIgnoreCase("true")
+                || value.equalsIgnoreCase("yes")
+                || value.equalsIgnoreCase("t")
+                || value.equalsIgnoreCase("y");
     }
 }

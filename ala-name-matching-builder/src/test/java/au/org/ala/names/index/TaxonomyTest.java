@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.*;
@@ -574,7 +575,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(12, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(22, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(52, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(22, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(23, this.rowCount(new File(dir, "rightsholder.txt")));
 
     }
 
@@ -595,7 +596,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(5, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(6, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(6, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(23, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(24, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
 
@@ -745,7 +746,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(6, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(11, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(11, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(22, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(23, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
     // Test the presence of a taxon loop
@@ -1102,8 +1103,115 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(19, this.rowCount(taxon));
         File reference = new File(this.output, "reference.txt");
         assertTrue(reference.exists());
-        this.dumpFile(reference);
+        //this.dumpFile(reference);
         assertEquals(3, this.rowCount(reference));
     }
+
+    @Test
+    public void testPreferredVernacular1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        DwcaNameSource source1 = new DwcaNameSource(new File(this.getClass().getResource("dwca-3").getFile()));
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        this.taxonomy.buildPreferredVernacular();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("https://biodiversity.org.au/afd/taxa/340484bd-33f6-4b46-a63c-751f0b159ed1");
+        assertNotNull(tci1);
+        TaxonConcept tc1 = tci1.getContainer();
+        assertNotNull(tc1);
+        VernacularName vn1 = tc1.getPreferred();
+        assertNotNull(vn1);
+        assertEquals("Orange Roughy", vn1.getVernacularName());
+        assertEquals("name:0003", vn1.getNameID());
+        assertEquals(300, vn1.getScore().intValue());
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("https://biodiversity.org.au/afd/taxa/23f4784e-1116-482c-8e3e-b6b12733f588");
+        assertNotNull(tci2);
+        TaxonConcept tc2 = tci2.getContainer();
+        assertNotNull(tc2);
+        VernacularName vn2 = tc2.getPreferred();
+        assertNotNull(vn2);
+        assertEquals("Eastern Grey Kangaroo", vn2.getVernacularName());
+        assertEquals("name:0005", vn2.getNameID());
+        assertEquals(150, vn2.getScore().intValue());
+     }
+
+
+    @Test
+    public void testPreferredVernacular2() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        DwcaNameSource source1 = new DwcaNameSource(new File(this.getClass().getResource("dwca-3").getFile()));
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        this.taxonomy.buildPreferredVernacular();
+        this.output = FileUtils.mkTempDir("merged", "", null);
+        this.taxonomy.createDwCA(this.output);
+        File taxon = new File(this.output, "taxon.txt");
+        assertTrue(taxon.exists());
+        //this.dumpFile(taxon);
+        assertEquals(4, this.rowCount(taxon));
+        File vernacular = new File(this.output, "vernacularname.txt");
+        assertTrue(vernacular.exists());
+        // this.dumpFile(vernacular);
+        assertEquals(6, this.rowCount(vernacular));
+    }
+
+
+    @Test
+    public void testPreferredVernacular3() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        DwcaNameSource locations1 = new DwcaNameSource(new File(this.getClass().getResource("locations").getFile()));
+        CSVNameSource vernacular1 = new CSVNameSource(this.resourceReader("vernacular-2.csv"), GbifTerm.VernacularName);
+        DwcaNameSource source1 = new DwcaNameSource(new File(this.getClass().getResource("dwca-3").getFile()));
+        this.taxonomy.load(Arrays.asList(locations1, vernacular1, source1));
+        this.taxonomy.resolve();
+        this.taxonomy.createWorkingIndex();
+        this.taxonomy.resolveUnplacedVernacular();
+        this.taxonomy.buildPreferredVernacular();
+        this.output = FileUtils.mkTempDir("merged", "", null);
+        this.taxonomy.createDwCA(this.output);
+        File taxon = new File(this.output, "taxon.txt");
+        assertTrue(taxon.exists());
+        //this.dumpFile(taxon);
+        assertEquals(4, this.rowCount(taxon));
+        File vernacular = new File(this.output, "vernacularname.txt");
+        assertTrue(vernacular.exists());
+        // this.dumpFile(vernacular);
+        assertEquals(8, this.rowCount(vernacular));
+    }
+    @Test
+    public void testPreferredVernacular4() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        DwcaNameSource source1 = new DwcaNameSource(new File(this.getClass().getResource("dwca-3").getFile()));
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        this.taxonomy.createWorkingIndex();
+        this.taxonomy.resolveUnplacedVernacular();
+        this.taxonomy.buildPreferredVernacular();
+        this.output = FileUtils.mkTempDir("merged", "", null);
+        this.taxonomy.createDwCA(this.output);
+        File taxon = new File(this.output, "taxon.txt");
+        assertTrue(taxon.exists());
+        //this.dumpFile(taxon);
+        assertEquals(4, this.rowCount(taxon));
+        File vernacular = new File(this.output, "vernacularname.txt");
+        assertTrue(vernacular.exists());
+        // this.dumpFile(vernacular);
+        assertEquals(6, this.rowCount(vernacular));
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("https://biodiversity.org.au/afd/taxa/23f4784e-1116-482c-8e3e-b6b12733f588");
+        assertNotNull(tci1);
+        assertNotNull(tci1.getVernacularNames());
+        assertEquals(3, tci1.getVernacularNames().size());
+        Optional<VernacularName> vn1 = tci1.getVernacularNames().stream().filter(v -> v.isForbidden()).findFirst();
+        assertTrue(vn1.isPresent());
+        assertEquals("name:0007", vn1.get().getNameID());
+    }
+
 
 }

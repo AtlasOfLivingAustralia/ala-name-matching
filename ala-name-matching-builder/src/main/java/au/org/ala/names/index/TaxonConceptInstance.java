@@ -242,6 +242,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      */
     private List<Distribution> distribution;
     /**
+     * The taxon vernacular names
+     */
+    private List<VernacularName> vernacularNames;
+    /**
      * The base score for position on the taxonomic tree
      */
     private Integer baseScore;
@@ -281,6 +285,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * @param classification              The taxonomic classification
      * @param flags                       The taxonomic flags
      * @param distribution                The taxon distribution
+     * @paarm vernacularNames             The taxon vernacular names
      */
     public TaxonConceptInstance(
             String taxonID,
@@ -306,7 +311,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             @Nullable List<String> provenance,
             @Nullable Map<Term, Optional<String>> classification,
             @Nullable Set<TaxonFlag> flags,
-            @Nullable List<Distribution> distribution
+            @Nullable List<Distribution> distribution,
+            @Nullable List<VernacularName> vernacularNames
     ) {
         this.taxonID = taxonID;
         this.code = code;
@@ -332,6 +338,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         this.classification = classification;
         this.flags = flags;
         this.distribution = distribution;
+        this.vernacularNames = vernacularNames;
     }
 
     /**
@@ -752,6 +759,27 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      */
     public List<Distribution> getDistribution() {
         return distribution;
+    }
+
+    /**
+     * Get the list of assigned vernacular names
+     *
+     * @return The list of vernacular names
+     */
+    public List<VernacularName> getVernacularNames() {
+        return vernacularNames;
+    }
+
+    /**
+     * Assign a vernacular name to this instance.
+     *
+     * @param name The name
+     */
+    public void assignVernacularName(VernacularName name) {
+        if (this.vernacularNames == null)
+            this.vernacularNames = new ArrayList<>();
+        this.vernacularNames.add(name);
+        name.setInstance(this);
     }
 
     /**
@@ -1637,7 +1665,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 this.provenance == null ? null : new ArrayList<>(this.provenance),
                 this.classification,
                 this.flags,
-                this.distribution
+                this.distribution,
+                this.vernacularNames == null ? null : new ArrayList<>(this.vernacularNames)
         );
         synonym.setContainer(concept);
         synonym.accepted = this;
@@ -1684,8 +1713,9 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 this.provenance == null ? null : new ArrayList<>(this.provenance),
                 this.classification,
                 this.flags,
-                this.distribution
-        );
+                this.distribution,
+                this.vernacularNames == null ? null : new ArrayList<>(this.vernacularNames)
+                );
         instance.setContainer(null);
         instance.accepted = this.accepted;
         instance.parent = this.parent;
