@@ -1146,6 +1146,13 @@
       }
     },
     {
+      "id" : "dr20514",
+      "name": "BirdLife",
+      "description": "Working List of Australian Birds",
+      "parent": "default",
+      "defaultVernacularScore" : 600
+    },
+    {
       "id" : "dr13558",
       "name": "ALA Inferences",
       "description": "Atlas of living Australia, provider of inferences from the matching algorithm",

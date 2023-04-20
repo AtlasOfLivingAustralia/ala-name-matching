@@ -323,6 +323,7 @@ public class VernacularName {
     }
 
     public Map<Term, String> asMap(Taxonomy taxonomy) throws IOException {
+        this.getScore(); // Ensure computed if not yet set
         Map<Term, String> map = taxonomy.getIndexValue(GbifTerm.VernacularName, "id", this.getId());
         map.put(ALATerm.nameID, this.nameID);
         map.put(DwcTerm.datasetID, this.provider == null ? null : this.provider.getId());
