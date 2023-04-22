@@ -17,7 +17,6 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.model.VernacularType;
-import au.org.ala.names.util.DwcaWriter;
 import au.org.ala.vocab.ALATerm;
 import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
@@ -316,7 +315,7 @@ public class VernacularName {
     /**
      * Set the forbidden flag.
      *
-     * @param forbidden
+     * @param forbidden Is this name forbidden for use?
      */
     public void setForbidden(boolean forbidden) {
         this.forbidden = forbidden;
@@ -333,8 +332,8 @@ public class VernacularName {
         map.put(DcTerm.language, this.language);
         map.put(DwcTerm.locationID, this.locality == null ? null : this.locality.getLocationID());
         map.put(DwcTerm.locality, this.locality == null ? null : this.locality.getLocality());
-        map.put(DwcTerm.taxonRemarks, this.taxonRemarks == null ? null : this.taxonRemarks.stream().collect(Collectors.joining("|")));
-        map.put(DcTerm.provenance, this.provenance == null ? null : this.provenance.stream().collect(Collectors.joining("|")));
+        map.put(DwcTerm.taxonRemarks, this.taxonRemarks == null ? null : String.join("|", this.taxonRemarks));
+        map.put(DcTerm.provenance, this.provenance == null ? null : String.join("|", this.provenance));
         map.put(ALATerm.priority, this.score == null ? null : Integer.toString(this.score));
         return map;
     }

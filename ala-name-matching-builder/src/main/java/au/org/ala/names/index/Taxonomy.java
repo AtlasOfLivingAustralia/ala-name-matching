@@ -99,7 +99,7 @@ public class Taxonomy implements Reporter {
     ));
 
     /**
-     * Terms not to copy from an unplaced vernacular or reference entry, usually because they
+     * Terms not to copy from an unplaced identifier or reference entry, usually because they
      * should come from the attached taxon.
      */
     protected static final List<String> UNPLACED_FORBIDDEN = Arrays.asList(
@@ -965,11 +965,52 @@ public class Taxonomy implements Reporter {
      */
     public void resolveUnplacedReferences() throws IndexBuilderException {
         logger.info("Resolving unplaced references");
+        this.resolveUnplacedEntries(ALATerm.UnplacedReference, GbifTerm.Reference, "reference.unplaced", "count.reference.unplaced");
+        logger.info("Finished resolving unplaced references");
+    }
+
+
+    /**
+     * Resolve any unplaced identifiers.
+     * <p>
+     * A new identfiier is added with the correct taxon ID and other information as supplied.
+     * </p>
+     * <p>
+     * There must be a working index set at this point, so that names can be found.
+     * See {@link #setWorkingIndex(ALANameSearcher)}
+     * </p>
+     *
+     * @throws IndexBuilderException
+     */
+    public void resolveUnplacedIdentifiers() throws IndexBuilderException {
+        logger.info("Resolving unplaced identifiers");
+        this.resolveUnplacedEntries(ALATerm.UnplacedIdentifier, GbifTerm.Identifier, "identifier.unplaced", "count.identifier.unplaced");
+        logger.info("Finished resolving unplaced identifiers");
+    }
+
+    /**
+     * Resolve generic unplaced entries.
+     * <p>
+     * A new, resolved version of the enrtry is added with the correct taxon ID and other information as supplied.
+     * </p>
+     * <p>
+     * There must be a working index set at this point, so that names can be found.
+     * See {@link #setWorkingIndex(ALANameSearcher)}
+     * </p>
+     *
+     * @param type The type of unplaced entry to look for
+     * @param resolved The type of a resolved entry
+     * @param unplacedCode A resource key that records an unplaced entry
+     * @param unplacedCount The resource key that counts unplaced entries
+     *
+     * @throws IndexBuilderException
+     */
+    protected void resolveUnplacedEntries(Term type, Term resolved, String unplacedCode, String unplacedCount) throws IndexBuilderException {
         if (this.workingIndex == null)
             throw new IndexBuilderException("No working name index set");
         try {
             BooleanQuery.Builder builder = new BooleanQuery.Builder();
-            builder.add(new TermQuery(new org.apache.lucene.index.Term("type", ALATerm.UnplacedReference.qualifiedName())), BooleanClause.Occur.MUST);
+            builder.add(new TermQuery(new org.apache.lucene.index.Term("type", type.qualifiedName())), BooleanClause.Occur.MUST);
             BooleanQuery query = builder.build();
             IndexSearcher searcher = this.searcherManager.acquire();
             try {
@@ -989,11 +1030,11 @@ public class Taxonomy implements Reporter {
                         TaxonConcept concept = tci == null ? null : tci.getContainer();
                         if (concept == null) {
                             String scientificName = document.get(fieldName(DwcTerm.scientificName));
-                            this.report(IssueType.PROBLEM, "reference.unplaced", "", scientificName, identifier);
-                            this.count("count.reference.unplaced");
+                            this.report(IssueType.PROBLEM, unplacedCode, "", scientificName, identifier);
+                            this.count(unplacedCount);
                         } else {
                             Document placed = new Document();
-                            placed.add(new StringField("type", GbifTerm.Reference.qualifiedName(), Field.Store.YES));
+                            placed.add(new StringField("type", resolved.qualifiedName(), Field.Store.YES));
                             placed.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
                             placed.add(new StringField(fieldName(DwcTerm.taxonID), concept.getRepresentative().getTaxonID(), Field.Store.YES));
                             for (IndexableField field : document) {
@@ -1011,15 +1052,12 @@ public class Taxonomy implements Reporter {
                 this.searcherManager.release(searcher);
                 this.searcherManager.maybeRefresh();
             }
-            logger.info("Finished resolving unplaced references");
         } catch (IndexBuilderException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new IndexBuilderException("Unable to search for unplaced references", ex);
+            throw new IndexBuilderException("Unable to search for unplaced entries of type " + type, ex);
         }
     }
-
-
     /**
      * Select preferred vernacular names for taxon concepts.
      * <p>

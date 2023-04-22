@@ -193,6 +193,8 @@ public class CSVNameSource extends NameSource {
             this.loadLocation(taxonomy);
         else if (this.rowType == GbifTerm.Reference)
             this.loadReference(taxonomy);
+        else if (this.rowType == GbifTerm.Identifier)
+            this.loadIdentifier(taxonomy);
         else
             throw new IndexBuilderException("Unable to support row type " + this.rowType);
 
@@ -440,7 +442,6 @@ public class CSVNameSource extends NameSource {
      * @throws IndexBuilderException if unable to load a record into the taxonomy.
      */
     public void loadReference(Taxonomy taxonomy) throws IndexBuilderException {
-        final Map<Term, Integer> termLocations = this.termLocations; // Lambda requires final local variable
         taxonomy.addOutputTerms(GbifTerm.Reference, this.terms);
         try {
             String[] r;
@@ -449,6 +450,40 @@ public class CSVNameSource extends NameSource {
                 final String[] record = r;
                 Document doc = new Document();
                 doc.add(new StringField("type", ALATerm.UnplacedReference.qualifiedName(), Field.Store.YES));
+                doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
+                for (int i = 0; i < record.length; i++) {
+                    Term term = this.terms.get(i);
+                    String value = record[i];
+                    if (term != null && value != null && !value.isEmpty())
+                        doc.add(new StringField(Taxonomy.fieldName(term), value, Field.Store.YES));
+                }
+                taxonomy.addRecords(Collections.singletonList(doc));
+            }
+        } catch (IndexBuilderException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new IndexBuilderException("Unable to load CSV file", ex);
+        }
+    }
+
+
+    /**
+     * Load identifiers into a taxonomy.
+     *
+     * @param taxonomy The taxonomy
+     *
+     * @throws IndexBuilderException if unable to load a record into the taxonomy.
+     */
+    public void loadIdentifier(Taxonomy taxonomy) throws IndexBuilderException {
+        final Map<Term, Integer> termLocations = this.termLocations; // Lambda requires final local variable
+        taxonomy.addOutputTerms(GbifTerm.Identifier, this.terms);
+        try {
+            String[] r;
+
+            while ((r = this.reader.readNext()) != null) {
+                final String[] record = r;
+                Document doc = new Document();
+                doc.add(new StringField("type", ALATerm.UnplacedIdentifier.qualifiedName(), Field.Store.YES));
                 doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
                 for (int i = 0; i < record.length; i++) {
                     Term term = this.terms.get(i);

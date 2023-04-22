@@ -87,6 +87,8 @@ public enum ALATerm implements Term {
     weight("bayesian:", "http://ala.org.au/bayesian/1.0/"),
     /** Record type describing a yet unplaced reference */
     UnplacedReference,
+    /** Record type describing a yet unplaced identifier */
+    UnplacedIdentifier,
     /** Record type describing a variant (different source, spelling etc.) of a taxon */
     TaxonVariant,
     /** Record type describing a problem or note about a taxon */
