@@ -213,6 +213,18 @@
         }
       ]
     }
+  },{
+    "id" : "dr121",
+    "parent": "dr110",
+    "acceptedOutput": {
+      "EXCLUDED": true
+    }
+  },{
+    "id" : "dr122",
+    "parent": "dr121",
+    "parentOutput": {
+      "ACCEPTED": false
+    }
   }
   ],
   "defaultProvider" : "unknown",

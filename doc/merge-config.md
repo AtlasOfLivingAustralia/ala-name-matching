@@ -88,7 +88,20 @@ Each provider contains the following information:
 * **defaultParentTaxon** The name of a default parent taxon to give to entires without an identifiable
   parent. This allows partial taxonomies to be shimmed into larger, orver-arching taxonomies.
   Use with caution, since the parent is applied without regard to rank.
-
+* **parentOutput** A map from taxonomic status to a boolean.
+  If the map explicitly maps a status on to true, a parent identifier is output, if present.
+  If the map explicitly maps a status on to false, a parent identifier is not output, even if present.
+  The default behavior is to output true if the status is generally regarded as accepted.
+  This map allows a per-provider way of ensuring that parents are output if available.
+  If a status is not set, then the status is inherited from the parent provider.
+* **acceptedOutput** A map from a taxonomic static to a boolean.
+  The acceptedOutput map operates in the same way as the parentOutput but
+  with respect to the accepted usage, if a taxon is synonym-like.
+  By default, accepted output occurs if the taxonomic status of an instance
+  is a synonym of some sort.
+  * For example, to allow excluded taxa to redirect to a synonym, use
+   `{ "EXCLUDED": true }`
+    In general, excluded taxa do not have an accepted name.
 
 ### Adjusters
 
