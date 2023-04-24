@@ -40,7 +40,8 @@ public class ALANameSearcherTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
+      searcher = new ALANameSearcher("/data/lucene/namematching-20230329-1");
+      //  searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
     }
 
     @Test
@@ -154,7 +155,7 @@ public class ALANameSearcherTest {
         String name = "Petaurus australis unnamed subsp.";
         String lsid = searcher.searchForLSID(name, true);
         assertNotNull(lsid);
-        assertEquals("ALA_DR652_233", lsid);
+        assertEquals("ALA_DR652_239", lsid);
     }
 
     @Test
@@ -168,7 +169,7 @@ public class ALANameSearcherTest {
         try {
             NameSearchResult nsr = searcher.searchForRecord(cl, true, true);
             assertNotNull(nsr);
-            assertEquals("https://biodiversity.org.au/afd/taxa/3309bb2e-5b3f-4664-977b-147e60b66109", nsr.getLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/1a660acd-ef0f-4216-8860-51c669808247", nsr.getLsid());
             System.out.println(nsr);
         } catch (Exception e) {
             e.printStackTrace();
@@ -329,7 +330,7 @@ public class ALANameSearcherTest {
             cl.setScientificName("Macropus rufus");
             nsr = searcher.searchForRecord(cl, true);
             assertNotNull(nsr);
-            assertEquals("https://biodiversity.org.au/afd/taxa/fbe09d8b-8cc2-444a-b8f7-d06730543781", nsr.getLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/cddaeba7-5b70-4662-b188-dd12efee3824", nsr.getLsid());
         } catch (SearchResultException ex) {
             fail("Not expecting exception " + ex);
         }
@@ -346,7 +347,7 @@ public class ALANameSearcherTest {
             cl.setScientificName("Osphranter rufus");
             nsr = searcher.searchForRecord(cl, true);
             assertNotNull(nsr);
-            assertEquals("https://biodiversity.org.au/afd/taxa/e6aff6af-ff36-4ad5-95f2-2dfdcca8caff", nsr.getLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/7e6e134b-2bc7-43c4-b23a-6e3f420f57ad", nsr.getLsid());
         } catch (SearchResultException ex) {
             fail("Not expecting exception " + ex);
         }
@@ -359,7 +360,7 @@ public class ALANameSearcherTest {
             String name = "Oenochrominae s. str."; // There's only one of these left
             NameSearchResult nsr = searcher.searchForRecord(name, null);
             assertNotNull(nsr);
-            assertEquals("https://biodiversity.org.au/afd/taxa/537ff8fb-b6c2-4536-9cb8-ad244832c1de", nsr.getLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/d0105fd4-2e0a-4fcd-8dea-37828853f535", nsr.getLsid());
         } catch (SearchResultException ex) {
             fail("Not expecting exception " + ex);
         }
@@ -371,7 +372,7 @@ public class ALANameSearcherTest {
             String name = "Pterodroma arminjoniana s. str.";
             NameSearchResult nsr = searcher.searchForRecord(name, null);
             assertNotNull(nsr);
-            assertEquals("ALA_DR656_1585", nsr.getLsid());
+            assertEquals("40041023", nsr.getLsid()); //Has taken CAAB as preferred now - will change again - new ALA_DR656_1587
         } catch (SearchResultException ex) {
             fail("Not expecting exception " + ex);
         }
@@ -446,7 +447,7 @@ public class ALANameSearcherTest {
             String name = "Anabathron contabulatum";
             NameSearchResult nsr = searcher.searchForRecord(name, null, true);
             assertNotNull(nsr);
-            assertEquals("https://biodiversity.org.au/afd/taxa/b64ec630-8835-4d42-887c-83aee5f417b8", nsr.getLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/b4f8bdfe-cf64-4f3d-9d52-58b2f702c072", nsr.getLsid());
         } catch (SearchResultException ex) {
             fail("Not expecting exception " + ex);
         }
@@ -539,7 +540,7 @@ public class ALANameSearcherTest {
             NameSearchResult nsr = null;
             nsr = searcher.searchForRecord(name, null);
             assertNotNull(nsr);
-            assertEquals("ALA_DR656_1585", nsr.getLsid());
+            assertEquals("40041023", nsr.getLsid()); // currently preferring CAAB - will change back to ALA_DR656_1587 when CAAB Vernacular only
         } catch (SearchResultException e) {
             fail("Unexpected search exception " + e);
         }
@@ -725,7 +726,7 @@ public class ALANameSearcherTest {
         try {
             NameSearchResult nsr = searcher.searchForRecord(name, null, true);
             assertNotNull(nsr);
-            assertEquals("https://biodiversity.org.au/afd/taxa/c7d8dbc8-dcde-4182-85ba-907182f95ea9", nsr.getLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/10f5404c-c891-4051-871c-8b700b0e4a46", nsr.getLsid());
             assertEquals(MatchType.EXACT, nsr.getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex.getMessage());
@@ -738,7 +739,7 @@ public class ALANameSearcherTest {
         try {
             NameSearchResult nsr = searcher.searchForRecord(name, null, true);
             assertNotNull(nsr);
-            assertEquals("https://biodiversity.org.au/afd/taxa/c7d8dbc8-dcde-4182-85ba-907182f95ea9", nsr.getLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/10f5404c-c891-4051-871c-8b700b0e4a46", nsr.getLsid());
             assertEquals(MatchType.SOUNDEX, nsr.getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex.getMessage());
@@ -752,7 +753,7 @@ public class ALANameSearcherTest {
             NameSearchResult nsr = searcher.searchForRecord(name, null, true);
             assertNotNull(nsr);
             assertEquals("SY_39006017_1", nsr.getLsid());
-            assertEquals("ALA_DR650_737", nsr.getAcceptedLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/cd651aef-f210-45b1-8652-3a33581d1beb", nsr.getAcceptedLsid());
             assertEquals(MatchType.SOUNDEX, nsr.getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex.getMessage());
@@ -803,7 +804,8 @@ public class ALANameSearcherTest {
         try {
             NameSearchResult nsr = searcher.searchForRecord(name, null, true);
             assertNotNull(nsr);
-            assertEquals("09df32b7ccf5484f6f280ec74ea31caf", nsr.getLsid());
+            //assertEquals("09df32b7ccf5484f6f280ec74ea31caf", nsr.getLsid());
+            assertEquals("https://www.catalogueoflife.org/data/taxon/6KHGV", nsr.getLsid());
             assertEquals(MatchType.SOUNDEX, nsr.getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex.getMessage());
@@ -930,7 +932,7 @@ public class ALANameSearcherTest {
 
     @Test
     public void testGetPrimaryLsid4() {
-        String primaryLsid = searcher.getPrimaryLsid("ALA_DR655_36");
+        String primaryLsid = searcher.getPrimaryLsid("ALA_DR655_118");
         assertEquals("https://id.biodiversity.org.au/node/apni/2917784", primaryLsid);
     }
 
@@ -1001,7 +1003,7 @@ public class ALANameSearcherTest {
             cl.setGenus("Macropus");
             //NameSearchResult nsr =searcher.searchForRecord(cl.getId(), cl, null, true,true);
             String lsid = searcher.searchForLSID("Macropus", false, true);
-            assertEquals("https://biodiversity.org.au/afd/taxa/b1d9bf29-648f-47e6-8544-2c2fbdf632b1", lsid);
+            assertEquals("https://biodiversity.org.au/afd/taxa/501c3628-1686-40b0-b291-2c09422c787b", lsid);
         } catch (Exception e) {
             fail("ignored homonyms should not throw exception " + e.getMessage());
         }
@@ -1030,7 +1032,7 @@ public class ALANameSearcherTest {
             cl.setGenus("Agathis");
             cl.setKingdom("Animalia");
             NameSearchResult nsr = searcher.searchForRecord(cl.getScientificName(), cl, null, true, true);
-            assertEquals("https://biodiversity.org.au/afd/taxa/d02923bc-cf54-4d7f-ae74-aac1d6af1830", nsr.getLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/10357297-d91b-4c4c-8582-2cade1cf46d6", nsr.getLsid());
         } catch (Exception e) {
             fail("A kingdom was supplied and should be resolvable. " + e.getMessage());
         }
@@ -1112,7 +1114,7 @@ public class ALANameSearcherTest {
         String name = "Red Kangaroo";
         String lsid = getCommonNameLSID(name);
         String sciName = getCommonName(name);
-        assertEquals("https://biodiversity.org.au/afd/taxa/e6aff6af-ff36-4ad5-95f2-2dfdcca8caff", lsid);
+        assertEquals("https://biodiversity.org.au/afd/taxa/7e6e134b-2bc7-43c4-b23a-6e3f420f57ad", lsid);
         assertEquals("Osphranter rufus", sciName);
     }
 
@@ -1148,7 +1150,7 @@ public class ALANameSearcherTest {
         String name = "Pacific Black Duck";
         String lsid = getCommonNameLSID(name);
         String sciName = getCommonName(name);
-        assertEquals("https://biodiversity.org.au/afd/taxa/81be58f5-caf7-4f3d-b1eb-d4f83eb0af5a", lsid);
+        assertEquals("https://biodiversity.org.au/afd/taxa/241dd5c6-1235-4eb9-b3d5-a44af6b0d444", lsid);
         assertEquals("Anas (Anas) superciliosa", sciName);
     }
 
@@ -1251,7 +1253,7 @@ public class ALANameSearcherTest {
     public void testSearchForLSID1() {
         try {
             String lsid = searcher.searchForLSID("Anochetus");
-            assertEquals("https://biodiversity.org.au/afd/taxa/f9d0d9dc-597d-4344-9e06-1704af36b9b1", lsid);
+            assertEquals("https://biodiversity.org.au/afd/taxa/1ec0e393-64a1-4df4-aacb-44c605b605b8", lsid);
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex.getMessage());
         }
@@ -1261,7 +1263,7 @@ public class ALANameSearcherTest {
     public void testSearchForLSID2() {
         try {
             String lsid = searcher.searchForLSID("Anochetus", true);
-            assertEquals("https://biodiversity.org.au/afd/taxa/f9d0d9dc-597d-4344-9e06-1704af36b9b1", lsid);
+            assertEquals("https://biodiversity.org.au/afd/taxa/1ec0e393-64a1-4df4-aacb-44c605b605b8", lsid);
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex.getMessage());
         }
@@ -1271,7 +1273,7 @@ public class ALANameSearcherTest {
     public void testSearchForLSID3() {
         try {
             String lsid = searcher.searchForLSID("Anochetus", true);
-            assertEquals("https://biodiversity.org.au/afd/taxa/f9d0d9dc-597d-4344-9e06-1704af36b9b1", lsid);
+            assertEquals("https://biodiversity.org.au/afd/taxa/1ec0e393-64a1-4df4-aacb-44c605b605b8", lsid);
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex.getMessage());
         }
@@ -1281,7 +1283,7 @@ public class ALANameSearcherTest {
     public void testSearchForLSID4() {
         try {
             String lsid = searcher.searchForLSID("Anochetus", RankType.GENUS);
-            assertEquals("https://biodiversity.org.au/afd/taxa/f9d0d9dc-597d-4344-9e06-1704af36b9b1", lsid);
+            assertEquals("https://biodiversity.org.au/afd/taxa/1ec0e393-64a1-4df4-aacb-44c605b605b8", lsid);
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex.getMessage());
         }
@@ -1292,7 +1294,7 @@ public class ALANameSearcherTest {
         try {
             LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Arthropoda", "Insecta", "Hymenoptera", "Formicidae", "Anochetus", null);
             String lsid = searcher.searchForLSID("Anochetus", cl, RankType.GENUS);
-            assertEquals("https://biodiversity.org.au/afd/taxa/f9d0d9dc-597d-4344-9e06-1704af36b9b1", lsid);
+            assertEquals("https://biodiversity.org.au/afd/taxa/1ec0e393-64a1-4df4-aacb-44c605b605b8", lsid);
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex.getMessage());
         }
@@ -1303,7 +1305,7 @@ public class ALANameSearcherTest {
         try {
             LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Arthropoda", "Insecta", "Hymenoptera", "Formicidae", "Anochetus", null);
             String lsid = searcher.searchForLSID(cl, true);
-            assertEquals("https://biodiversity.org.au/afd/taxa/f9d0d9dc-597d-4344-9e06-1704af36b9b1", lsid);
+            assertEquals("https://biodiversity.org.au/afd/taxa/1ec0e393-64a1-4df4-aacb-44c605b605b8", lsid);
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex.getMessage());
         }
@@ -1314,7 +1316,7 @@ public class ALANameSearcherTest {
         try {
             LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Arthropoda", "Insecta", "Hymenoptera", "Formicidae", "Anochetus", null);
             String lsid = searcher.searchForLSID(cl, true);
-            assertEquals("https://biodiversity.org.au/afd/taxa/f9d0d9dc-597d-4344-9e06-1704af36b9b1", lsid);
+            assertEquals("https://biodiversity.org.au/afd/taxa/1ec0e393-64a1-4df4-aacb-44c605b605b8", lsid);
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex.getMessage());
         }
@@ -1414,7 +1416,7 @@ public class ALANameSearcherTest {
             String name = "Poodytes gramineus";
             NameSearchResult nsr = searcher.searchForRecord(name);
             assertNotNull(nsr);
-            assertEquals("https://biodiversity.org.au/afd/taxa/061fef09-7c9d-4b6d-9827-4da13a350dc6", nsr.getLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/b4c2ec8d-918d-4fb4-8ef9-f6d5d3bbceda", nsr.getLsid());
         } catch (SearchResultException e) {
             fail("Unexpected search exception " + e);
         }
@@ -1521,7 +1523,7 @@ public class ALANameSearcherTest {
             String name = "Neobatrachus sudellae";
             NameSearchResult nsr = searcher.searchForRecord(name);
             assertNotNull(nsr);
-            assertEquals("https://biodiversity.org.au/afd/taxa/953a5af4-2932-4c8b-8f33-850b5f8f3fed", nsr.getLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/3b4960a0-ce97-450e-89b7-a360e4280c39", nsr.getLsid());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
         }
@@ -1567,7 +1569,7 @@ public class ALANameSearcherTest {
         String name = "Stephanopis similis";
         NameSearchResult nsr = searcher.searchForRecord(name);
         assertNotNull(nsr);
-        assertEquals("https://biodiversity.org.au/afd/taxa/24bc164a-85b2-4633-85c5-a3b399daec0a", nsr.getLsid());
+        assertEquals("https://biodiversity.org.au/afd/taxa/4a97fc18-858c-4283-9950-5325a7edb6ce", nsr.getLsid());
     }
 
     @Test
@@ -1575,7 +1577,7 @@ public class ALANameSearcherTest {
         String name = "Fraus latistria";
         NameSearchResult nsr = searcher.searchForRecord(name);
         assertNotNull(nsr);
-        assertEquals("https://biodiversity.org.au/afd/taxa/2358fcc0-8db2-475d-8da4-fd4bd5e711f2", nsr.getLsid());
+        assertEquals("https://biodiversity.org.au/afd/taxa/061bc92c-8647-4739-a83d-d3ef16e80c06", nsr.getLsid());
     }
 
     @Test
@@ -1600,7 +1602,7 @@ public class ALANameSearcherTest {
         String name = "Poaceae";
         NameSearchResult nsr = searcher.searchForRecord(name);
         assertNotNull(nsr);
-        assertEquals("https://id.biodiversity.org.au/taxon/apni/51352071", nsr.getLsid());
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51644646", nsr.getLsid());
     }
 
 
@@ -1609,7 +1611,7 @@ public class ALANameSearcherTest {
         String name = "Pterostylis sp. aff. boormanii (Beechworth)";
         NameSearchResult nsr = searcher.searchForRecord(name);
         assertNotNull(nsr);
-        assertEquals("ALA_DR655_403", nsr.getLsid());
+        assertEquals("ALA_DR655_1389", nsr.getLsid());
         name = "Pterostylis sp. aff. boormanii";
         nsr = searcher.searchForRecord(name);
         assertNotNull(nsr);
@@ -1667,7 +1669,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus (Koala)");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR656_1402", metrics.getResult().getLsid());
+        assertEquals("ALA_DR656_1404", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1676,7 +1678,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus (combined populations of Qld, NSW and the ACT)");
         metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR656_1402", metrics.getResult().getLsid());
+        assertEquals("ALA_DR656_1404", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1685,7 +1687,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus (Koala, Guba)");
         metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR656_1402", metrics.getResult().getLsid());
+        assertEquals("ALA_DR656_1404", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1694,7 +1696,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus (Koala, Guba)");
         metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR656_1402", metrics.getResult().getLsid());
+        assertEquals("ALA_DR656_1404", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1703,7 +1705,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus ( Koala )");
         metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR656_1402", metrics.getResult().getLsid());
+        assertEquals("ALA_DR656_1404", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1735,7 +1737,7 @@ public class ALANameSearcherTest {
         } catch (ParentSynonymChildException ex) {
             NameSearchResult nsr = ex.getChildResult();
             assertNotNull(nsr);
-            assertEquals("https://id.biodiversity.org.au/node/fungi/60083449", nsr.getLsid());
+            assertEquals("https://id.biodiversity.org.au/node/fungi/60108346", nsr.getLsid());
             assertEquals(RankType.FORM, nsr.getRank());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
@@ -1751,8 +1753,8 @@ public class ALANameSearcherTest {
             cl.setScientificName(name);
             NameSearchResult nsr = searcher.searchForRecord(cl, true);
             assertNotNull(nsr);
-            assertEquals("https://biodiversity.org.au/afd/taxa/426ab801-0d5f-4b43-b1b4-55ce7ce7a44e", nsr.getLsid());
-            assertEquals("https://biodiversity.org.au/afd/taxa/6c212123-fadc-4307-8dd8-ac501bb534ba", nsr.getAcceptedLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/0d45a8af-f675-4566-b186-e01d14b16f62", nsr.getLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/066b76e0-168c-4f98-abe5-ca00b52811e7", nsr.getAcceptedLsid());
             assertEquals("Stigmodera aurifera", nsr.getRankClassification().getScientificName());
             assertEquals(MatchType.CANONICAL, nsr.getMatchType());
         } catch (SearchResultException e) {
@@ -1854,7 +1856,7 @@ public class ALANameSearcherTest {
         cl.setOrder("Dipsacales");
         NameSearchResult nsr = searcher.searchForRecord(cl, true);
         assertNotNull(nsr);
-        assertEquals("https://id.biodiversity.org.au/node/apni/2892114", nsr.getLsid());
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51432946", nsr.getLsid());
      }
 
     @Test
@@ -1953,19 +1955,19 @@ public class ALANameSearcherTest {
         assertEquals("https://id.biodiversity.org.au/node/apni/2911212", metrics.getResult().getAcceptedLsid());
     }
 
-
-    @Test
-    public void testSynonymAccepted4() throws Exception {
-        String name = "Sugomel niger";
-        LinnaeanRankClassification cl = new LinnaeanRankClassification();
-        cl.setScientificName(name);
-        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-        assertNotNull(metrics);
-        assertEquals("ALA_DR7933_6", metrics.getResult().getLsid());
-        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
-        assertTrue(metrics.getErrors().contains(ErrorType.NONE));
-        assertEquals("https://biodiversity.org.au/afd/taxa/b32a2ec6-315c-48cf-84b3-4898e39f4b57", metrics.getResult().getAcceptedLsid());
-    }
+// Appears to have been corrected in AFD - no need for this test
+//    @Test
+//    public void testSynonymAccepted4() throws Exception {
+//        String name = "Sugomel niger";
+//        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+//        cl.setScientificName(name);
+//        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+//        assertNotNull(metrics);
+//        assertEquals("ALA_DR7933_6", metrics.getResult().getLsid());
+//        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+//        assertTrue(metrics.getErrors().contains(ErrorType.NONE));
+//        assertEquals("https://biodiversity.org.au/afd/taxa/b32a2ec6-315c-48cf-84b3-4898e39f4b57", metrics.getResult().getAcceptedLsid());
+//    }
 
     // Available as a synonym but also misapplied.
     @Test
@@ -2111,9 +2113,9 @@ public class ALANameSearcherTest {
         cl.setScientificName(name);
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR652_1992", metrics.getResult().getLsid());
-        assertEquals("https://id.biodiversity.org.au/taxon/apni/51367864", metrics.getResult().getRankClassification().getGid());
-        assertEquals("https://id.biodiversity.org.au/taxon/apni/51367862", metrics.getResult().getRankClassification().getFid());
+        assertEquals("https://id.biodiversity.org.au/name/apni/51337126", metrics.getResult().getLsid());
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51446975", metrics.getResult().getRankClassification().getGid());
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51461748", metrics.getResult().getRankClassification().getFid());
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
     }
 
