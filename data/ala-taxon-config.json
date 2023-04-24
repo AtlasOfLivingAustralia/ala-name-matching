@@ -1058,7 +1058,10 @@
       },
       "owner": [
         "Animalia"
-      ]
+      ],
+      "acceptedOutput": {
+        "EXCLUDED": true
+      }
     },
     {
       "id" : "dr5393",

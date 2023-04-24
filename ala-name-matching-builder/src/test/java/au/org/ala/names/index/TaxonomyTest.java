@@ -575,7 +575,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(12, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(22, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(52, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(23, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(25, this.rowCount(new File(dir, "rightsholder.txt")));
 
     }
 
@@ -596,7 +596,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(5, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(6, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(6, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(24, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(26, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
 
@@ -746,7 +746,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(6, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(11, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(11, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(23, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(25, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
     // Test the presence of a taxon loop
@@ -1213,6 +1213,51 @@ public class TaxonomyTest extends TestUtils {
         assertEquals("name:0007", vn1.get().getNameID());
     }
 
+    // Ensure excluded taxa are handled correctly
+    // Issue 188
+    @Test
+    public void testExcluded1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        DwcaNameSource source1 = new DwcaNameSource(new File(this.getClass().getResource("dwca-4").getFile()));
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("https://biodiversity.org.au/afd/taxa/7374604e-ceef-4f9a-ab86-fd4238a3e2b9");
+        assertEquals(TaxonomicType.EXCLUDED, tci1.getTaxonomicStatus());
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("https://biodiversity.org.au/afd/taxa/65625205-db74-4a87-b566-ca387b119974");
+        assertSame(tci2, tci1.getAccepted());
+
+        this.output = FileUtils.mkTempDir("merged", "", null);
+        this.taxonomy.createDwCA(this.output);
+        File taxon = new File(this.output, "taxon.txt");
+        assertTrue(taxon.exists());
+        // this.dumpFile(taxon);
+        assertEquals(8, this.rowCount(taxon));
+        assertTrue(this.fileContains(taxon, Pattern.compile("https://biodiversity.org.au/afd/taxa/7374604e-ceef-4f9a-ab86-fd4238a3e2b9\t\thttps://biodiversity.org.au/afd/taxa/65625205-db74-4a87-b566-ca387b119974.*\texcluded\t.*")));
+        assertTrue(this.fileContains(taxon, Pattern.compile("https://biodiversity.org.au/afd/taxa/065f1da4-53cd-40b8-a396-80fa5c74dedd\thttps://biodiversity.org.au/afd/taxa/4647863b-760d-4b59-aaa1-502c8cdf8d3c\t\t.*\taccepted\t.*")));
+   }
+
+    // Ensure inheritance
+    // Issue 188
+    @Test
+    public void testExcluded2() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-41.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+
+        this.output = FileUtils.mkTempDir("merged", "", null);
+        this.taxonomy.createDwCA(this.output);
+        File taxon = new File(this.output, "taxon.txt");
+        assertTrue(taxon.exists());
+        // this.dumpFile(taxon);
+        assertEquals(8, this.rowCount(taxon));
+        assertTrue(this.fileContains(taxon, Pattern.compile("https://biodiversity.org.au/afd/taxa/065f1da4-53cd-40b8-a396-80fa5c74dedd\t\t\t.*\taccepted\t.*")));
+        assertTrue(this.fileContains(taxon, Pattern.compile("https://biodiversity.org.au/afd/taxa/7374604e-ceef-4f9a-ab86-fd4238a3e2b9\t\thttps://biodiversity.org.au/afd/taxa/65625205-db74-4a87-b566-ca387b119974.*\texcluded\t.*")));
+    }
 
     @Test
     public void testIdentifiers1() throws Exception {
