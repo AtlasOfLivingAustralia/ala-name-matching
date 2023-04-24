@@ -70,7 +70,7 @@ public class TestUtils {
         return new VernacularName(id, vernacularName, status, isPreferredName, language, location, provider, null, null, null, 0, false);
     }
 
-    public int rowCount(File file) throws IOException {
+    public static int rowCount(File file) throws IOException {
         if (!file.exists())
             return -1;
         BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));

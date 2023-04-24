@@ -18,6 +18,7 @@ package au.org.ala.names.index;
 
 import au.org.ala.names.index.provider.*;
 import au.org.ala.names.model.RankType;
+import au.org.ala.names.model.TaxonomicType;
 import com.fasterxml.jackson.annotation.*;
 import org.gbif.api.model.registry.Citation;
 import org.gbif.dwc.terms.DcTerm;
@@ -123,6 +124,12 @@ public class NameProvider {
     private Map<String, String> scientificNameAuthorshipChanges;
     @JsonProperty
     private RankType distributionCutoff;
+    /** Taxonomic status that allows output of a parent */
+    @JsonProperty
+    private Map<TaxonomicType, Boolean> parentOutput;
+    /** Taxonomic status that allows output of an accepted taxon */
+    @JsonProperty
+    private Map<TaxonomicType, Boolean> acceptedOutput;
     /** The location resolver */
     @JsonIgnore
     private LocationResolver locationResolver;
@@ -154,6 +161,8 @@ public class NameProvider {
         this.scientificNameChanges = new HashMap<>();
         this.scientificNameAuthorshipChanges = new HashMap<>();
         this.distributionCutoff = null;
+        this.parentOutput = new HashMap<>();
+        this.acceptedOutput = new HashMap<>();
         this.locationResolver = new LocationResolver();
         this.reporter = new LogReporter();
     }
@@ -180,6 +189,8 @@ public class NameProvider {
         this.scientificNameChanges = new HashMap<>();
         this.scientificNameAuthorshipChanges = new HashMap<>();
         this.distributionCutoff = null;
+        this.parentOutput = new HashMap<>();
+        this.acceptedOutput = new HashMap<>();
         this.locationResolver = new LocationResolver();
         this.reporter = new LogReporter();
     }
@@ -215,6 +226,8 @@ public class NameProvider {
         this.scientificNameChanges = new HashMap<>();
         this.scientificNameAuthorshipChanges = new HashMap<>();
         this.distributionCutoff = null;
+        this.parentOutput = new HashMap<>();
+        this.acceptedOutput = new HashMap<>();
         this.locationResolver = new LocationResolver();
         this.reporter = new LogReporter();
     }
@@ -886,4 +899,65 @@ public class NameProvider {
     public int postLocationLoad() {
         return this.locationResolver.resolve();
     }
+
+    /**
+     * Should a taxon have a parent taxon?
+     * <p>
+     * Generally, this corresponds to {@link TaxonomicType#isAccepted()} but this can be
+     * overriden by the parentOutput mapping.
+     * </p>
+     * @param instance The taxon concept instance to test
+     *
+     * @return True if a parent/parent name usage is allowed
+     */
+    public boolean allowParentOutput(TaxonConceptInstance instance) {
+        TaxonomicType status = instance.getTaxonomicStatus();
+        Boolean allow = this.allowParentOutput(status);
+        return allow == null ? status.isAccepted() : allow;
+    }
+
+    /**
+     * Lookup explicit parent output status.
+     *
+     * @param status The statuc
+     *
+     * @return True if allowed, false if not allowed, null if default.
+     */
+    protected Boolean allowParentOutput(TaxonomicType status) {
+        Boolean allow = this.parentOutput.get(status);
+        if (allow == null && this.parent != null)
+            allow = this.parent.allowParentOutput(status);
+        return allow;
+    }
+
+    /**
+     * Should a taxon have an accepted taxon?
+     * <p>
+     * Generally, this corresponds to {@link TaxonomicType#isSynonym()} but this can be
+     * overriden by the acceptedOutput mapping.
+     * </p>
+     * @param instance The taxon concept instance to test
+     *
+     * @return True if a accepted name usage is allowed
+     */
+    public boolean allowAcceptedOutput(TaxonConceptInstance instance) {
+        TaxonomicType status = instance.getTaxonomicStatus();
+        Boolean allow = this.allowAcceptedOutput(status);
+        return allow == null ? status.isSynonym() : allow;
+    }
+
+    /**
+     * Lookup explicit accepted output status.
+     *
+     * @param status The status
+     *
+     * @return True if allowed, false if not allowed, null if default.
+     */
+    protected Boolean allowAcceptedOutput(TaxonomicType status) {
+        Boolean allow = this.acceptedOutput.get(status);
+        if (allow == null && this.parent != null)
+            allow = this.parent.allowAcceptedOutput(status);
+        return allow;
+    }
+
 }

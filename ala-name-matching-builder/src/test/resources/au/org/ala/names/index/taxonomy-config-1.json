@@ -27,7 +27,9 @@
     "authority" : true,
     "unknownTaxonID" : "ALA_The_Unknown_Taxon",
     "scientificNameChanges" : { },
-    "scientificNameAuthorshipChanges" : { }
+    "scientificNameAuthorshipChanges" : { },
+    "parentOutput" : { },
+    "acceptedOutput" : { }
   } ],
   "defaultProvider" : "ID-1",
   "acceptedCutoff" : 50,

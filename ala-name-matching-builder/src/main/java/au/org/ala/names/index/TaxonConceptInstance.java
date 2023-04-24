@@ -1459,7 +1459,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             values.put(ALATerm.verbatimTaxonRemarks, this.verbatimTaxonRemarks);
         if (this.provenance != null)
             values.put(DcTerm.provenance, this.getProvenanceString());
-        if (this.parent == null || (!this.isAccepted() && strict)) {
+        if (this.parent == null || (strict && !this.getAuthority().allowParentOutput(this))) {
             values.remove(DwcTerm.parentNameUsageID); // If instance has become a synonym
             values.remove(DwcTerm.parentNameUsage);
         } else {
@@ -1477,7 +1477,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             }
             values.put(DwcTerm.parentNameUsageID, pid);
         }
-        if (this.accepted == null || (!this.isSynonym() && strict)) {
+        if (this.accepted == null || (strict && !this.getAuthority().allowAcceptedOutput(this))) {
             values.remove(DwcTerm.acceptedNameUsageID); // If instance has become accepted
             values.remove(DwcTerm.acceptedNameUsage);
         } else {
