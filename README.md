@@ -13,7 +13,7 @@ This code contains additions for handling some Australian specific issues.
   include in your application, even if you don' want to name match.
 * **ala-name-matching-search** Local name index searching.
   Include this in you application if you want to match names against a local name index.
-* **ala-name-magcing-builder** Merge taxonomies and build name indexes.
+* **ala-name-matching-builder** Merge taxonomies and build name indexes.
   This is a separate module to the searcher so that you can build the name
   index that the searcher uses, without importing a shedload of dependencies
   if you just want to search for things.
