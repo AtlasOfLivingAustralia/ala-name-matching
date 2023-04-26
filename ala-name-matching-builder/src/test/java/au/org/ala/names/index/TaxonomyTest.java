@@ -1259,4 +1259,29 @@ public class TaxonomyTest extends TestUtils {
         assertTrue(this.fileContains(taxon, Pattern.compile("https://biodiversity.org.au/afd/taxa/7374604e-ceef-4f9a-ab86-fd4238a3e2b9\t\thttps://biodiversity.org.au/afd/taxa/65625205-db74-4a87-b566-ca387b119974.*\texcluded\t.*")));
     }
 
+    @Test
+    public void testIdentifiers1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource locations1 = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
+        DwcaNameSource identifiers1 = new DwcaNameSource(new File(this.getClass().getResource("identifiers-1").getFile()));
+        DwcaNameSource source1 = new DwcaNameSource(new File(this.getClass().getResource("dwca-2").getFile()));
+        this.taxonomy.load(Arrays.asList(locations1, identifiers1, source1));
+        this.taxonomy.resolve();
+        this.taxonomy.createWorkingIndex();
+        this.taxonomy.resolveUnplacedIdentifiers();
+        this.output = FileUtils.mkTempDir("merged", "", null);
+        this.taxonomy.createDwCA(this.output);
+        File taxon = new File(this.output, "taxon.txt");
+        assertTrue(taxon.exists());
+        this.dumpFile(taxon);
+        assertEquals(19, this.rowCount(taxon));
+        File identifier = new File(this.output, "identifier.txt");
+        assertTrue(identifier.exists());
+        this.dumpFile(identifier);
+        // 19 taxa + the three identifiers that match
+        assertEquals(22, this.rowCount(identifier));
+    }
+
 }

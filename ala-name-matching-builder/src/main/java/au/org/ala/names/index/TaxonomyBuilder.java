@@ -155,6 +155,7 @@ public class TaxonomyBuilder {
             taxonomy.createWorkingIndex();
             taxonomy.resolveUnplacedVernacular();
             taxonomy.resolveUnplacedReferences();
+            taxonomy.resolveUnplacedIdentifiers();
 
             // Select preferred vernacular names
             taxonomy.buildPreferredVernacular();

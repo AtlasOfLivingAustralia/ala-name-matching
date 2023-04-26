@@ -1,0 +1,21 @@
+<archive xmlns="http://rs.tdwg.org/dwc/text/" metadata="eml.xml">
+  <!--Generated on 2023-04-20 12:00:46.108480-->
+  <core rowType="http://rs.gbif.org/terms/1.0/Identifier" encoding="UTF-8" fieldsTerminatedBy="," linesTerminatedBy="\r\n" fieldsEnclosedBy="&quot;" ignoreHeaderLines="1">
+    <files>
+      <location>identifier.csv</location>
+    </files>
+    <id index="0"/>
+    <field index="0" term="http://rs.tdwg.org/dwc/terms/scientificName"/>
+    <field index="1" term="http://rs.tdwg.org/dwc/terms/scientificNameAuthorship"/>
+    <field index="2" term="http://rs.tdwg.org/dwc/terms/kingdom"/>
+    <field index="3" term="http://rs.tdwg.org/dwc/terms/phylum"/>
+    <field index="4" term="http://rs.tdwg.org/dwc/terms/class"/>
+    <field index="5" term="http://rs.tdwg.org/dwc/terms/order"/>
+    <field index="6" term="http://rs.tdwg.org/dwc/terms/family"/>
+    <field index="7" term="http://purl.org/dc/terms/identifier"/>
+    <field index="8" term="http://rs.tdwg.org/dwc/terms/datasetID"/>
+    <field index="9" term="http://purl.org/dc/terms/title"/>
+    <field index="10" term="http://ala.org.au/terms/1.0/status"/>
+    <field index="11" term="http://purl.org/dc/terms/source"/>
+  </core>
+</archive>

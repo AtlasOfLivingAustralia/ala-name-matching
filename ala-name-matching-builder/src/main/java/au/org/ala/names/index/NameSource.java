@@ -117,6 +117,18 @@ abstract public class NameSource {
     );
     /** Terms not to be included in identifier outputs */
     protected static final List<Term> IDENTIFIER_FORBIDDEN = Arrays.asList(
+            DwcTerm.scientificName,
+            DwcTerm.scientificNameAuthorship,
+            DwcTerm.nomenclaturalCode,
+            DwcTerm.taxonRank,
+            DwcTerm.kingdom,
+            DwcTerm.phylum,
+            DwcTerm.class_,
+            DwcTerm.order,
+            DwcTerm.family,
+            DwcTerm.genus,
+            DwcTerm.specificEpithet,
+            DwcTerm.infraspecificEpithet
     );
     /** Fields expected for a verncular name */
     protected static final List<Term> VERNACULAR_REQUIRED = Arrays.asList(

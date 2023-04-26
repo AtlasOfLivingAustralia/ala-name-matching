@@ -1,0 +1,18 @@
+<eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.1.1">
+  <dataset>
+    <alternativeIdentifier>DR2704</alternativeIdentifier>
+    <title>Test Identifier Dataset</title>
+    <creator>
+      <organizationName>CAAB</organizationName>
+    </creator>
+    <pubDate>2023-04-20</pubDate>
+    <series>DR2704</series>
+  </dataset>
+  <additionalMetadata>
+    <metadata>
+      <gbif>
+        <dateStamp>2023-04-20T04:26:09</dateStamp>
+      </gbif>
+    </metadata>
+  </additionalMetadata>
+</eml:eml>

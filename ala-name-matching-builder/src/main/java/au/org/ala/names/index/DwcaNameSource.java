@@ -202,6 +202,8 @@ public class DwcaNameSource extends NameSource {
             this.loadVernacularDwCA(taxonomy);
         else if (coreType == GbifTerm.Reference)
             this.loadNonTaxonDwCA(taxonomy, ALATerm.UnplacedReference);
+        else if (coreType == GbifTerm.Identifier)
+            this.loadNonTaxonDwCA(taxonomy, ALATerm.UnplacedIdentifier);
         else if (coreType == ALATerm.Location)
             this.loadLocationDwCA(taxonomy);
         else {
@@ -602,7 +604,7 @@ public class DwcaNameSource extends NameSource {
      * @param type     The type of record
      * @param record   The record
      * @param taxonID  The actual, stored taxonID (used as a link)
-     * @param nameID   The actual, stored nameID (also used as a link)
+     * @param id   The actual, stored record identifier
      * @return The record as a document
      */
     private Document makeDocument(Taxonomy taxonomy, Term type, Record record, String taxonID, String id) {
