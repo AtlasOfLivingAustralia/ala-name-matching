@@ -17,6 +17,7 @@
 package au.org.ala.names.index.provider;
 
 import au.org.ala.names.index.NameKey;
+import au.org.ala.names.index.NameProvider;
 import au.org.ala.names.index.NomenclaturalClassifier;
 import au.org.ala.names.index.TaxonConceptInstance;
 import au.org.ala.names.model.RankType;
@@ -87,8 +88,8 @@ public class KeyAdjustment {
         this.rank = rank;
     }
 
-    public NameKey adjust(NameKey key, TaxonConceptInstance instance) {
-        if (!this.condition.match(instance, key))
+    public NameKey adjust(NameKey key, TaxonConceptInstance instance, NameProvider provider) {
+        if (!this.condition.match(instance, key, provider))
             return key;
         NomenclaturalClassifier nc = this.nomenclaturalCode != null ? this.nomenclaturalCode : key.getCode();
         String sn = this.scientificName != null ? this.scientificName : key.getScientificName();

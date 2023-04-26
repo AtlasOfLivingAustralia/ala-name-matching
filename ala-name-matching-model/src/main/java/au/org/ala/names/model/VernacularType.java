@@ -26,13 +26,14 @@ import java.util.Map;
  * @copyright Copyright &copy; 2018 Atlas of Living Australia
  */
 public enum VernacularType {
-    STANDARD("standard", 900, false),
-    PREFERRED("preferred", 800, false),
-    COMMON("common", 700, false, "vernacular"),
-    TRADITIONAL_KNOWLEDGE("traditionalKnowledge", 600, false, "traditional knowledge", "traditional"),
-    LEGISLATIVE("legislated", 500, true, "legislative"),
-    MISCELLANEOUS_LITERATURE("miscellaneousLiterature", 400, true, "miscellaneous literature", "misc lit"),
-    LOCAL("local", 300, false);
+    STANDARD("standard", 900, false, false),
+    PREFERRED("preferred", 800, false, false),
+    COMMON("common", 700, false, false,"vernacular"),
+    TRADITIONAL_KNOWLEDGE("traditionalKnowledge", 600, false, false, "traditional knowledge", "traditional"),
+    LEGISLATIVE("legislated", 500, true, false, "legislative"),
+    MISCELLANEOUS_LITERATURE("miscellaneousLiterature", 400, true, false, "miscellaneous literature", "misc lit"),
+    LOCAL("local", 300, false, false),
+    DEPRECATED("deprecated", 0, false, true);
 
     private static Map<String, VernacularType> nameMap = new HashMap<>();
 
@@ -50,10 +51,12 @@ public enum VernacularType {
     private String[] altTerms;
     /** Is this a pseudo-scientific name? */
     private boolean pseudoScientific;
+    /** Is this a deprecated name? */
+    private boolean deprecated;
     /** The name priority */
     private int priority;
 
-    VernacularType(String term, int priority, boolean pseudoScientific, String... altTerms) {
+    VernacularType(String term, int priority, boolean pseudoScientific, boolean deprecated, String... altTerms) {
         this.term = term;
         this.priority = priority;
         this.pseudoScientific = pseudoScientific;

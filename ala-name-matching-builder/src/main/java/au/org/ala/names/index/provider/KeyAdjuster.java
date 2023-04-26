@@ -17,6 +17,7 @@
 package au.org.ala.names.index.provider;
 
 import au.org.ala.names.index.NameKey;
+import au.org.ala.names.index.NameProvider;
 import au.org.ala.names.index.TaxonConceptInstance;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -43,7 +44,7 @@ public class KeyAdjuster {
         this.adjustments.add(adjustment);
     }
 
-    public NameKey adjustKey(NameKey base, TaxonConceptInstance instance) {
-        return this.adjustments.stream().reduce(base, (key, adjuster) -> adjuster.adjust(key, instance), (a, b) -> a);
+    public NameKey adjustKey(NameKey base, TaxonConceptInstance instance, NameProvider provider) {
+        return this.adjustments.stream().reduce(base, (key, adjuster) -> adjuster.adjust(key, instance, provider), (a, b) -> a);
     }
 }

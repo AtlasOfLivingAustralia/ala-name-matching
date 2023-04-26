@@ -57,7 +57,7 @@ public class ScoreAdjusterTest extends TestUtils {
     public void testForbidden1() {
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Osphranter rufus", this.provider, TaxonomicType.ACCEPTED );
         NameKey key = this.analyser.analyse(instance).getNameKey();
-        assertNull(adjuster.forbid(instance, key));
+        assertNull(adjuster.forbid(instance, key, this.provider));
     }
 
 
@@ -65,48 +65,48 @@ public class ScoreAdjusterTest extends TestUtils {
     public void testForbidden2() {
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Osphranter rufus", this.provider, TaxonomicType.INCERTAE_SEDIS );
         NameKey key = this.analyser.analyse(instance).getNameKey();
-        assertEquals("taxonomicStatus:INCERTAE_SEDIS", adjuster.forbid(instance, key));
+        assertEquals("taxonomicStatus:INCERTAE_SEDIS", adjuster.forbid(instance, key, this.provider));
     }
 
     @Test
     public void testScore1() {
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Osphranter rufus", this.provider, TaxonomicType.ACCEPTED );
         NameKey key = this.analyser.analyse(instance).getNameKey();
-        assertEquals(0, adjuster.score(0, instance, key));
+        assertEquals(0, adjuster.score(0, instance, key, this.provider));
     }
 
     @Test
     public void testScore2() {
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Osphranter rufus", this.provider, TaxonomicType.ACCEPTED );
         NameKey key = this.analyser.analyse(instance).getNameKey();
-        assertEquals(50, adjuster.score(50, instance, key));
+        assertEquals(50, adjuster.score(50, instance, key, this.provider));
     }
 
     @Test
     public void testScore3() {
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Osphranter rufus", this.provider, TaxonomicType.MISAPPLIED );
         NameKey key = this.analyser.analyse(instance).getNameKey();
-        assertEquals(-10, adjuster.score(0, instance, key));
+        assertEquals(-10, adjuster.score(0, instance, key, this.provider));
     }
 
     @Test
     public void testScore4() {
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Osphranter rufus", this.provider, TaxonomicType.MISAPPLIED );
         NameKey key = this.analyser.analyse(instance).getNameKey();
-        assertEquals(90, adjuster.score(100, instance, key));
+        assertEquals(90, adjuster.score(100, instance, key, this.provider));
     }
 
     @Test
     public void testScore5() {
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalClassifier.BOTANICAL, NomenclaturalClassifier.BOTANICAL.getAcronym(), this.provider,"Acacia dealbata", "Link.", null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.DOMAIN,  RankType.DOMAIN.getRank(), null, null,null, null, null, null, null, null, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalClassifier.BOTANICAL, NomenclaturalClassifier.BOTANICAL.getAcronym(), this.provider,"Acacia dealbata", "Link.", null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.DOMAIN,  RankType.DOMAIN.getRank(), null, null,null, null, null, null, null, null, null, null, null, null, null);
         NameKey key = this.analyser.analyse(instance).getNameKey();
-        assertEquals(115, adjuster.score(100, instance, key));
+        assertEquals(115, adjuster.score(100, instance, key, this.provider));
     }
 
     @Test
     public void testScore6() {
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalClassifier.BOTANICAL, NomenclaturalClassifier.BOTANICAL.getAcronym(), this.provider,"Acacia dealbata", "Link.", null, null, TaxonomicType.MISAPPLIED, TaxonomicType.MISAPPLIED.getTerm(), RankType.DOMAIN,  RankType.DOMAIN.getRank(), null, null,null, null, null, null, null, null, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalClassifier.BOTANICAL, NomenclaturalClassifier.BOTANICAL.getAcronym(), this.provider,"Acacia dealbata", "Link.", null, null, TaxonomicType.MISAPPLIED, TaxonomicType.MISAPPLIED.getTerm(), RankType.DOMAIN,  RankType.DOMAIN.getRank(), null, null,null, null, null, null, null, null, null, null, null, null, null);
         NameKey key = this.analyser.analyse(instance).getNameKey();
-        assertEquals(105, adjuster.score(100, instance, key));
+        assertEquals(105, adjuster.score(100, instance, key, this.provider));
     }
 }

@@ -8,9 +8,14 @@
     "id" : "ID-1",
     "name" : "ID-1",
     "defaultScore" : 150,
+    "defaultVernacularScore" : 150,
     "scores" : { },
     "owner" : [ ],
     "adjuster" : {
+      "forbidden" : [ ],
+      "adjustments" : [ ]
+    },
+    "vernacularAdjuster" : {
       "forbidden" : [ ],
       "adjustments" : [ ]
     },
@@ -22,7 +27,9 @@
     "authority" : true,
     "unknownTaxonID" : "ALA_The_Unknown_Taxon",
     "scientificNameChanges" : { },
-    "scientificNameAuthorshipChanges" : { }
+    "scientificNameAuthorshipChanges" : { },
+    "parentOutput" : { },
+    "acceptedOutput" : { }
   } ],
   "defaultProvider" : "ID-1",
   "acceptedCutoff" : 50,

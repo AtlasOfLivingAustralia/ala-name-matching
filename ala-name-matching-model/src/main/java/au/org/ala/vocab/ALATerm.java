@@ -83,8 +83,8 @@ public enum ALATerm implements Term {
     distribution,
     /** The publication DOI of a document */
     doi,
-    /** Record type describing an unplaced vernacular name */
-    UnplacedVernacularName,
+    /** Weight for scoring */
+    weight("bayesian:", "http://ala.org.au/bayesian/1.0/"),
     /** Record type describing a yet unplaced reference */
     UnplacedReference,
     /** Record type describing a variant (different source, spelling etc.) of a taxon */
@@ -92,7 +92,11 @@ public enum ALATerm implements Term {
     /** Record type describing a problem or note about a taxon */
     TaxonomicIssue,
     /** Location information */
-    Location("dwc:", "http://rs.tdwg.org/dwc/terms/");
+    Location("dwc:", "http://rs.tdwg.org/dwc/terms/"),
+    /** Location names */
+    LocationName,
+    /** Location identifier */
+    LocationIdentifier;
 
     public static final String NS = "http://ala.org.au/terms/1.0/";
     public static final String PREFIX = "ala:";

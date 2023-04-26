@@ -16,11 +16,10 @@
 
 package au.org.ala.names.util;
 
-import au.org.ala.names.index.NameProvider;
-import au.org.ala.names.index.NomenclaturalClassifier;
-import au.org.ala.names.index.TaxonConceptInstance;
+import au.org.ala.names.index.*;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
+import au.org.ala.names.model.VernacularType;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
@@ -59,14 +58,19 @@ public class TestUtils {
     }
 
     public TaxonConceptInstance createInstance(String id, NomenclaturalClassifier code, String name, NameProvider provider) {
-        return new TaxonConceptInstance(id, code, code.getAcronym(), provider, name, null, null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null,null, null, null, null, null, null, null, null, null, null);
+        return new TaxonConceptInstance(id, code, code.getAcronym(), provider, name, null, null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null,null, null, null, null, null, null, null, null, null, null, null);
     }
 
     public TaxonConceptInstance createInstance(String id, NomenclaturalClassifier code, String name, NameProvider provider, TaxonomicType taxonomicStatus) {
-        return new TaxonConceptInstance(id, code, code.getAcronym(), provider, name, null, null, null, taxonomicStatus, taxonomicStatus.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null, null, null, null, null, null);
+        return new TaxonConceptInstance(id, code, code.getAcronym(), provider, name, null, null, null, taxonomicStatus, taxonomicStatus.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
-    public int rowCount(File file) throws IOException {
+    public VernacularName createVernacular(String id, String vernacularName, NameProvider provider, VernacularType status, boolean isPreferredName, String language, String locality) {
+        Location location = provider.findLocation(locality);
+        return new VernacularName(id, vernacularName, status, isPreferredName, language, location, provider, null, null, null, 0, false);
+    }
+
+    public static int rowCount(File file) throws IOException {
         if (!file.exists())
             return -1;
         BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));

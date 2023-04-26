@@ -406,7 +406,7 @@ public class ALATaxonResolverTest extends TestUtils {
         CSVNameSource locations = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
         CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-39.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(locations, source));
-        this.taxonomy.resolveLocations();
+        this.taxonomy.postLocationLoad();
         this.taxonomy.resolveLinks();
         TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-1-1");
         TaxonConceptInstance tci2 = this.taxonomy.getInstance("Concept-1-2");
@@ -430,7 +430,7 @@ public class ALATaxonResolverTest extends TestUtils {
         CSVNameSource locations = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
         CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-39.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(locations, source));
-        this.taxonomy.resolveLocations();
+        this.taxonomy.postLocationLoad();
         this.taxonomy.resolveLinks();
         TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-2-1");
         TaxonConceptInstance tci2 = this.taxonomy.getInstance("Concept-2-2");
@@ -455,7 +455,7 @@ public class ALATaxonResolverTest extends TestUtils {
         CSVNameSource locations = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
         CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-39.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(locations, source));
-        this.taxonomy.resolveLocations();
+        this.taxonomy.postLocationLoad();
         this.taxonomy.resolveLinks();
         TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-3-1");
         TaxonConcept tc1 = tci1.getContainer();
@@ -475,7 +475,7 @@ public class ALATaxonResolverTest extends TestUtils {
         CSVNameSource locations = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
         CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-39.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(locations, source));
-        this.taxonomy.resolveLocations();
+        this.taxonomy.postLocationLoad();
         this.taxonomy.resolveLinks();
         TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-4-1");
         TaxonConcept tc1 = tci1.getContainer();
@@ -498,7 +498,7 @@ public class ALATaxonResolverTest extends TestUtils {
         CSVNameSource locations = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
         CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-39.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(locations, source));
-        this.taxonomy.resolveLocations();
+        this.taxonomy.postLocationLoad();
         this.taxonomy.resolveLinks();
         TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-5-1");
         TaxonConcept tc1 = tci1.getContainer();
@@ -516,7 +516,7 @@ public class ALATaxonResolverTest extends TestUtils {
         CSVNameSource locations = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
         CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-39.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(locations, source));
-        this.taxonomy.resolveLocations();
+        this.taxonomy.postLocationLoad();
         this.taxonomy.resolveLinks();
         TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-6-1");
         TaxonConceptInstance tci2 = this.taxonomy.getInstance("Concept-6-2");

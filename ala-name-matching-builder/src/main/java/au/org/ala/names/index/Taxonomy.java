@@ -44,7 +44,6 @@ import org.gbif.api.vocabulary.*;
 import org.gbif.checklistbank.authorship.AuthorComparator;
 import org.gbif.dwc.terms.*;
 import org.gbif.dwc.terms.Term;
-import org.gbif.dwca.record.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,16 +69,24 @@ import java.util.stream.Collectors;
 public class Taxonomy implements Reporter {
     private static Logger logger = LoggerFactory.getLogger(Taxonomy.class);
     private static DateTimeFormatter ISO8601 = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-    /** How many things to go before giving an update */
+    /**
+     * How many things to go before giving an update
+     */
     public static int PROGRESS_INTERVAL = 10000;
 
 
-    /** The map of terms onto lucene fields */
+    /**
+     * The map of terms onto lucene fields
+     */
     private static Map<Term, String> fieldNames = new HashMap<>();
-    /** The map of lucene fields to terms */
+    /**
+     * The map of lucene fields to terms
+     */
     private static Map<String, Term> fieldTerms = new HashMap<>();
 
-    /** The counts we do progress reports on */
+    /**
+     * The counts we do progress reports on
+     */
     public static Set<String> COUNT_PROGRESS = new HashSet<>(Arrays.asList(
             "count.homonym",
             "count.load.instance",
@@ -144,48 +151,86 @@ public class Taxonomy implements Reporter {
     };
 
 
-    /** The configuration */
+    /**
+     * The configuration
+     */
     private TaxonomyConfiguration configuration;
-    /** The name analyser */
+    /**
+     * The name analyser
+     */
     private NameAnalyser analyser;
-    /** The taxon resolver */
+    /**
+     * The taxon resolver
+     */
     private TaxonResolver resolver;
-    /** The work directory */
+    /**
+     * The work directory
+     */
     private File work;
-    /** The index to use for storing documents */
+    /**
+     * The index to use for storing documents
+     */
     private Analyzer indexAnalyzer;
     private File index;
     private Directory indexDir;
     private IndexWriter indexWriter;
     private SearcherManager searcherManager;
-    /** The list of scientific names */
+    /**
+     * The list of scientific names
+     */
     private Map<NameKey, ScientificName> names;
-    /** The list of unranked scientific names */
+    /**
+     * The list of unranked scientific names
+     */
     private Map<NameKey, UnrankedScientificName> unrankedNames;
-    /** The list of bare unranked/uncoded scientific names */
+    /**
+     * The list of bare unranked/uncoded scientific names
+     */
     private Map<NameKey, BareName> bareNames;
-    /** The list of name instances, keyed by taxonID */
+    /**
+     * The list of name instances, keyed by taxonID
+     */
     private Map<String, TaxonConceptInstance> instances;
-    /** The list of name sources, keyed by identifier */
+    /**
+     * The list of name sources, keyed by identifier
+     */
     private Map<String, NameProvider> providers;
-    /** The default source */
+    /**
+     * The default source
+     */
     private NameProvider defaultProvider;
-    /** The source associated with inferences from this process */
+    /**
+     * The source associated with inferences from this process
+     */
     private NameProvider inferenceProvider;
-    /** The output map */
+    /**
+     * The output map
+     */
     private Map<Term, Set<Term>> outputMap;
-    /** The resource bundle for error reporting */
+    /**
+     * The resource bundle for error reporting
+     */
     private ResourceBundle resources;
-    /** The progress counts */
+    /**
+     * The progress counts
+     */
     private ConcurrentMap<String, AtomicInteger> counts;
-    /** The list of name sources used */
+    /**
+     * The list of name sources used
+     */
     private List<NameSource> sources;
-    /** A working name matching index. Used to find things that don't have an explicit home */
+    /**
+     * A working name matching index. Used to find things that don't have an explicit home
+     */
     private ALANameSearcher workingIndex;
-    /** Optional sample set of concepts to output */
+    /**
+     * Optional sample set of concepts to output
+     */
     private Set<TaxonConcept> sample;
-    /** The location map */
-    private Map<String, Location> locations;
+    /**
+     * The vernacular name map
+     */
+    private Map<String, VernacularName> vernacularNames;
 
     /**
      * Default taxonomy constructor.
@@ -244,15 +289,15 @@ public class Taxonomy implements Reporter {
         this.counts = new ConcurrentHashMap<>();
         this.sources = new ArrayList<>();
         this.sample = null;
-        this.locations = new HashMap<>();
+        this.vernacularNames = new HashMap<>();
     }
 
     /**
      * Construct a taxonomy.
      *
-     * @param analyser The name analyser to use
-     * @param resolver The resolver to use
-     * @param providers The list of data providers
+     * @param analyser        The name analyser to use
+     * @param resolver        The resolver to use
+     * @param providers       The list of data providers
      * @param defaultProvider The default provider
      */
     public Taxonomy(NameAnalyser analyser, TaxonResolver resolver, Map<String, NameProvider> providers, NameProvider defaultProvider) {
@@ -273,7 +318,6 @@ public class Taxonomy implements Reporter {
         this.counts = new ConcurrentHashMap<>();
         this.sources = new ArrayList<>();
         this.sample = null;
-        this.locations = new HashMap<>();
     }
 
     /**
@@ -334,7 +378,6 @@ public class Taxonomy implements Reporter {
      * Get an instance corresponding to a taxonID.
      *
      * @param taxonID The taxon identifier
-     *
      * @return The corresponding instance or null for not found
      */
     public TaxonConceptInstance getInstance(String taxonID) {
@@ -354,6 +397,15 @@ public class Taxonomy implements Reporter {
     }
 
     /**
+     * Get the default name provider.
+     *
+     * @return The default name provider
+     */
+    public NameProvider getDefaultProvider() {
+        return this.defaultProvider;
+    }
+
+    /**
      * Add a count to the statistics
      *
      * @param type The count type
@@ -365,7 +417,7 @@ public class Taxonomy implements Reporter {
     /**
      * Add a count to the statistics
      *
-     * @param type The count type
+     * @param type   The count type
      * @param amount The amount to add
      */
     public void count(String type, int amount) {
@@ -420,6 +472,7 @@ public class Taxonomy implements Reporter {
             throw new IndexBuilderException("Error closing taxonomy", ex);
         }
     }
+
     /**
      * Load a sequence of name sources into the taxonomy.
      * <p>
@@ -450,12 +503,11 @@ public class Taxonomy implements Reporter {
     }
 
     /**
-     * Resolve the location list
+     * Make sure all the locations are tickety-boo
      */
-    public void resolveLocations() {
-        for (Location loc: this.locations.values()) {
-            loc.resolve(this.locations);
-            this.count("count.location.resolve");
+    public void postLocationLoad() {
+        for (NameProvider provider: this.providers.values()) {
+            this.count("count.location.resolve", provider.postLocationLoad());
         }
     }
 
@@ -478,7 +530,7 @@ public class Taxonomy implements Reporter {
      * </ul>
      */
     public void resolve() throws Exception {
-        this.resolveLocations();
+        this.postLocationLoad();
         this.provideUnknownTaxon();
         this.resolveLinks();
         this.resolveLoops();
@@ -533,6 +585,7 @@ public class Taxonomy implements Reporter {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
             this.addInstance(ut);
@@ -556,6 +609,7 @@ public class Taxonomy implements Reporter {
      * Each instance either needs to have a null parent or a parent that matches the parentNameUsageID, if supplied,
      * or the kingdom - phylum - class - order - family - genus - specificEpithet - infraspecificEpithet classificatio, if supplied.
      * </p>
+     *
      * @throws IndexBuilderException
      */
     public void resolveLinks() throws IndexBuilderException {
@@ -600,7 +654,7 @@ public class Taxonomy implements Reporter {
         for (Map.Entry<String, Integer> entry: counts.entrySet()) {
             if (entry.getValue() > 1) {
                 this.count("count.homonym");
-                this.report(IssueType.NOTE, "name.homonym", null, entry.getKey());
+                this.report(IssueType.NOTE, "name.homonym", "", entry.getKey());
             }
         }
         logger.info("Finished validating name collisions");
@@ -638,40 +692,40 @@ public class Taxonomy implements Reporter {
             }
         });
         for (ScientificName sn: nameCounts.keySet()) {
-           for (Map.Entry<String, List<ScientificName>> collision: nameCounts.get(sn).entrySet().stream().filter(c -> c.getValue().size() > 1).collect(Collectors.toList())) {
-               Set<TaxonConceptInstance> instances = collision.getValue().stream().flatMap(tn -> tn.getConcepts().stream()).
-                       filter(tc -> tc.getPrincipals() != null).flatMap(tc -> tc.getPrincipals().stream()).
-                       filter(tci -> tci.isAccepted()).collect(Collectors.toSet());
+            for (Map.Entry<String, List<ScientificName>> collision: nameCounts.get(sn).entrySet().stream().filter(c -> c.getValue().size() > 1).collect(Collectors.toList())) {
+                Set<TaxonConceptInstance> instances = collision.getValue().stream().flatMap(tn -> tn.getConcepts().stream()).
+                        filter(tc -> tc.getPrincipals() != null).flatMap(tc -> tc.getPrincipals().stream()).
+                        filter(tci -> tci.isAccepted()).collect(Collectors.toSet());
 
-               String code = "name.spelling";
-               String count = "count.spelling";
-               IssueType type = IssueType.COLLISION;
+                String code = "name.spelling";
+                String count = "count.spelling";
+                IssueType type = IssueType.COLLISION;
 
-               // Check and skip simple authorship disagreement
-               Set<String> names = instances.stream().map(tci -> tci.getContainer().getKey().getScientificName()).collect(Collectors.toSet());
-               if (names.size() == 1) {
-                   code = "name.spelling.authorship";
-                   count = "count.spelling.authorship";
-                   type = IssueType.NOTE;
-               }
-               // Check an internal disagreement in single provider
-               Set<NameProvider> providers = instances.stream().map(tci -> tci.getAuthority()).collect(Collectors.toSet());
-               if (providers.size() == 1) {
-                   // Internal disagreement in a single provider
-                   code = "name.spelling.internal";
-                   count = "count.spelling.internal";
-                   type = IssueType.NOTE;
-               }
-               // Check disagreement between nomenclatural codes
-               Set<NomenclaturalClassifier> codes = instances.stream().map(tci -> tci.getCode()).collect(Collectors.toSet());
-               if (codes.size() > 1) {
-                   code = "name.spelling.crossCode";
-                   count = "count.spelling.crossCode";
-               }
+                // Check and skip simple authorship disagreement
+                Set<String> names = instances.stream().map(tci -> tci.getContainer().getKey().getScientificName()).collect(Collectors.toSet());
+                if (names.size() == 1) {
+                    code = "name.spelling.authorship";
+                    count = "count.spelling.authorship";
+                    type = IssueType.NOTE;
+                }
+                // Check an internal disagreement in single provider
+                Set<NameProvider> providers = instances.stream().map(tci -> tci.getAuthority()).collect(Collectors.toSet());
+                if (providers.size() == 1) {
+                    // Internal disagreement in a single provider
+                    code = "name.spelling.internal";
+                    count = "count.spelling.internal";
+                    type = IssueType.NOTE;
+                }
+                // Check disagreement between nomenclatural codes
+                Set<NomenclaturalClassifier> codes = instances.stream().map(tci -> tci.getCode()).collect(Collectors.toSet());
+                if (codes.size() > 1) {
+                    code = "name.spelling.crossCode";
+                    count = "count.spelling.crossCode";
+                }
 
-               this.count(count);
-               this.report(type, code, sn, new ArrayList<>(instances));
-           }
+                this.count(count);
+                this.report(type, code, sn, new ArrayList<>(instances));
+            }
         }
         logger.info("Finished validating suspiciously similar namess");
     }
@@ -746,7 +800,10 @@ public class Taxonomy implements Reporter {
         } while (resolved != prevResolved);
         Set<TaxonConcept> unresolvedConcepts = allInstances.stream().map(TaxonConceptInstance::getContainer).filter(tc -> !tc.isResolved()).collect(Collectors.toSet());
         logger.info("Found " + unresolvedConcepts.size() + " un-resolved concepts");
-        unresolvedConcepts.parallelStream().forEach(tc -> { tc.resolveTaxon(this, false); this.report(IssueType.PROBLEM, "taxonConcept.unresolved", tc, null); });
+        unresolvedConcepts.parallelStream().forEach(tc -> {
+            tc.resolveTaxon(this, false);
+            this.report(IssueType.PROBLEM, "taxonConcept.unresolved", tc, null);
+        });
         logger.info("Finished resolving taxa");
 
     }
@@ -822,6 +879,7 @@ public class Taxonomy implements Reporter {
 
     /**
      * Work out what to do with any instances that need to be discarded.
+     *
      * @throws IndexBuilderException
      * @throws IOException
      */
@@ -851,56 +909,45 @@ public class Taxonomy implements Reporter {
         if (this.workingIndex == null)
             throw new IndexBuilderException("No working name index set");
         try {
-            BooleanQuery.Builder builder = new BooleanQuery.Builder();
-            builder.add(new TermQuery(new org.apache.lucene.index.Term("type", ALATerm.UnplacedVernacularName.qualifiedName())), BooleanClause.Occur.MUST);
-            BooleanQuery query = builder.build();
             IndexSearcher searcher = this.searcherManager.acquire();
             try {
-                ScoreDoc after = null;
-                TopDocs docs = searcher.searchAfter(after, query, 100, Sort.INDEXORDER);
-                while (docs.scoreDocs.length > 0) {
-                    for (ScoreDoc sd : docs.scoreDocs) {
-                        after = sd;
-                        Document document = searcher.doc(sd.doc);
-                        TaxonConceptInstance tci = null;
-                        String taxonID = document.get(fieldName(DwcTerm.taxonID));
-                        if (taxonID != null)
-                            tci = this.instances.get(taxonID);
-                        if (tci == null)
-                            tci = this.search(document);
-                        String vernacularName = document.get(fieldName(DwcTerm.vernacularName));
-                        TaxonConcept concept = tci == null ? null : tci.getContainer();
-                        if (concept == null) {
-                            String scientificName = document.get(fieldName(DwcTerm.scientificName));
-                            this.report(IssueType.PROBLEM, "vernacularName.unplaced", null, scientificName, vernacularName);
-                            this.count("count.vernacularName.unplaced");
+                for (VernacularName name : this.vernacularNames.values()) {
+                    if (name.isAssigned())
+                        continue;
+                    if (name.getInstance() != null) { // Well, whoops
+                        this.report(IssueType.PROBLEM, "vernacular.unplaced.assigned", name, name.getInstance().getTaxonID());
+                        name.getInstance().assignVernacularName(name);
+                        continue;
+                    }
+                    BooleanQuery.Builder builder = new BooleanQuery.Builder();
+                    builder.add(new TermQuery(new org.apache.lucene.index.Term("type", GbifTerm.VernacularName.qualifiedName())), BooleanClause.Occur.MUST);
+                    builder.add(new TermQuery(new org.apache.lucene.index.Term("id", name.getId())), BooleanClause.Occur.MUST);
+                    BooleanQuery query = builder.build();
+                    TopDocs topDocs = searcher.search(query, 1);
+                    if (topDocs.totalHits.value == 0) {
+                        this.report(IssueType.PROBLEM, "vernacular.unplaced.noDocument", name);
+                    } else {
+                        Document doc = searcher.doc(topDocs.scoreDocs[0].doc);
+                        TaxonConceptInstance tci = this.search(doc);
+                        if (tci == null) {
+                            this.report(IssueType.PROBLEM, "vernacular.unplaced.noMatch", name);
+                            this.count("count.vernacular.unplaced");
                         } else {
-                            Document placed = new Document();
-                            placed.add(new StringField("type", GbifTerm.VernacularName.qualifiedName(), Field.Store.YES));
-                            placed.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
-                            placed.add(new StringField(fieldName(DwcTerm.taxonID), concept.getRepresentative().getTaxonID(), Field.Store.YES));
-                            for (IndexableField field : document) {
-                                if (!UNPLACED_FORBIDDEN.contains(field.name())) {
-                                    placed.add(field);
-                                }
-                            }
-                            this.indexWriter.addDocument(placed);
+                            tci.assignVernacularName(name);
+                            this.count("count.vernacular.placed");
                         }
                     }
-                    this.indexWriter.commit();
-                    docs = searcher.searchAfter(after, query, 100, Sort.INDEXORDER);
                 }
+                logger.info("Finished resolving unplaced vernacular names");
             } finally {
                 this.searcherManager.release(searcher);
                 this.searcherManager.maybeRefresh();
             }
-            logger.info("Finished resolving unplaced vernacular names");
         } catch (IndexBuilderException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new IndexBuilderException("Unable to search for unplaced vernacular names", ex);
         }
-
     }
 
 
@@ -942,7 +989,7 @@ public class Taxonomy implements Reporter {
                         TaxonConcept concept = tci == null ? null : tci.getContainer();
                         if (concept == null) {
                             String scientificName = document.get(fieldName(DwcTerm.scientificName));
-                            this.report(IssueType.PROBLEM, "reference.unplaced", null, scientificName, identifier);
+                            this.report(IssueType.PROBLEM, "reference.unplaced", "", scientificName, identifier);
                             this.count("count.reference.unplaced");
                         } else {
                             Document placed = new Document();
@@ -970,6 +1017,25 @@ public class Taxonomy implements Reporter {
         } catch (Exception ex) {
             throw new IndexBuilderException("Unable to search for unplaced references", ex);
         }
+    }
+
+
+    /**
+     * Select preferred vernacular names for taxon concepts.
+     * <p>
+     * Vernacular names are scored, so that they can be used in preference.
+     * </p>
+     *
+     * @throws IndexBuilderException
+     */
+    public void buildPreferredVernacular() throws IndexBuilderException {
+        logger.info("Building preferred vernacular names");
+        this.addOutputTerms(DwcTerm.Taxon, Collections.singleton(DwcTerm.vernacularName));
+        this.instances.values().parallelStream()
+                .map(tci -> tci.getContainer())
+                .distinct()
+                .forEach(tc -> tc.buildPreferredVernacular(this));
+        logger.info("Finished building preferred vernacular names");
     }
 
     /**
@@ -1028,7 +1094,7 @@ public class Taxonomy implements Reporter {
         if ((provider = this.providers.get(datasetName)) != null)
             return provider;
         provider = new NameProvider(datasetID != null ? datasetID : datasetName, datasetName, this.defaultProvider, true);
-        this.report(IssueType.NOTE, "taxonomy.load.provider", null, null, provider.getId());
+        this.report(IssueType.NOTE, "taxonomy.load.provider", "", null, provider.getId());
         if (datasetID != null)
             this.providers.put(datasetID, provider);
         if (datasetName != null)
@@ -1037,7 +1103,7 @@ public class Taxonomy implements Reporter {
     }
 
     /**
-     * Get a GBIF normenclatural code.
+     * Get a GBIF nomenclatural code.
      * <p>
      * If not matched, then
      * </p>
@@ -1054,7 +1120,6 @@ public class Taxonomy implements Reporter {
      * Get an ALA taxonomic type for a taxonomic status
      *
      * @param taxonomicStatus The taxonomic status
-     *
      * @return The synonym type
      */
     public TaxonomicType resolveTaxonomicType(String taxonomicStatus) {
@@ -1062,9 +1127,10 @@ public class Taxonomy implements Reporter {
     }
 
     /**
-     * Process supplied
-     * @param taxonomicFlags
-     * @return
+     * Process supplied taxonomic flags
+     *
+     * @param taxonomicFlags The list of flags
+     * @return The flags as a list
      */
     public Set<TaxonFlag> resolveTaxonomicFlags(String taxonomicFlags) {
         if (StringUtils.isBlank(taxonomicFlags))
@@ -1112,21 +1178,9 @@ public class Taxonomy implements Reporter {
     }
 
     /**
-     * Get a location for a location identifier or name
-     *
-     * @param location The location ID
-     *
-     * @return The location
-     */
-    public Location resolveLocation(String location) {
-        return this.locations.get(location);
-    }
-
-    /**
      * Get an GBIF life stage for a life stage
      *
      * @param lifeStage The lifestage
-     *
      * @return The mapped life stage
      */
     public LifeStage resolveLifeStage(String lifeStage) {
@@ -1270,7 +1324,8 @@ public class Taxonomy implements Reporter {
                     instance.getProvenance() == null ? null : new ArrayList<>(instance.getProvenance()),
                     instance.getClassification(),
                     instance.getFlags(),
-                    instance.getDistribution()
+                    instance.getDistribution(),
+                    instance.getVernacularNames() == null ? null : new ArrayList<>(instance.getVernacularNames())
             );
             instance.addProvenance(remark);
             this.addProvenanceToOutput();
@@ -1312,17 +1367,44 @@ public class Taxonomy implements Reporter {
     }
 
     /**
-     * Add a new location to the location map.
+     * Add a new location to the location map in the (global) top-level provider.
      *
      * @param location The location to add
-     *
-     * @throws IndexBuilderException if unable to add the location
      */
     public void addLocation(Location location) {
-        if (this.locations.containsKey(location.getLocationID()))
-            throw new IndexBuilderException("Location identifier " + location.getLocationID() + " is already in use");
-        this.locations.put(location.getLocationID(), location);
+        this.defaultProvider.getTopProivder().addLocation(location);
     }
+
+
+    /**
+     * Add a new instance of a vernacular name.
+     *
+     * @param name The vernacular name instance
+     * @return The instance that was actually added
+     * @throws Exception if unable to slot the instance in.
+     */
+    public VernacularName addVernacular(VernacularName name) throws Exception {
+        VernacularName original = name;
+        String id = name.getId();
+        String explain;
+        if (this.vernacularNames.containsKey(id)) {
+            name = name.withNewID();
+            this.report(IssueType.PROBLEM, "vernacular.identifier.duplicate", original, name.getNameID());
+        }
+        if (!name.isForbidden() && (explain = name.getProvider().forbid(name)) != null) {
+            this.count("count.load.vernacular.forbidden");
+            this.report(IssueType.NOTE, "taxonomy.load.forbidden.vernacular", name);
+            String remark = this.getResources().getString("taxonomy.load.forbidden.vernacular.provenance");
+            remark = MessageFormat.format(remark, explain);
+            name.addTaxonRemark(remark);
+            this.addRemarksToOutput();
+            name.setForbidden(true);
+        }
+        this.count("count.load.vernacular." + name.getStatus().name());
+        this.vernacularNames.put(name.getId(), name);
+        return name;
+    }
+
 
     /**
      * Find a taxon instance for a particular name.
@@ -1366,6 +1448,8 @@ public class Taxonomy implements Reporter {
         this.resetCount("count.write.taxonConcept");
         this.resetCount("count.write.taxonConceptInstance");
         this.addOutputTerms(GbifTerm.Identifier, Arrays.asList(DcTerm.title, ALATerm.status, DcTerm.source)); // Generated by taxon concept instance
+        if (!this.vernacularNames.isEmpty())
+            this.addOutputTerms(GbifTerm.VernacularName, VernacularName.REQUIRED_TERMS);
         DwcaWriter dwcaWriter = new DwcaWriter(DwcTerm.Taxon, DwcTerm.taxonID, directory, true);
         dwcaWriter.setEml(this.buildEml());
         for (NameProvider provider: this.providers.values()) {
@@ -1443,9 +1527,7 @@ public class Taxonomy implements Reporter {
      * <ul>
      *     <li>{0} The taxonID of the source element, either a name or a proper taxonID</li>
      *     <li>{1} Any attached scientific name, preferably the display name</li>
-     *     <li>{2} Any attached authorship</li>
-     *     <li>{3} Any attached value</li>
-     *     <li>{4+} Additional arguments</li>
+     *     <li>{2+} Additional arguments</li>
      * </ul>
      *
      * @param type The type of report
@@ -1506,7 +1588,7 @@ public class Taxonomy implements Reporter {
             doc.add(new StringField(fieldName(DwcTerm.taxonID), taxonID, Field.Store.YES));
         if (name != null)
             doc.add(new StringField(fieldName(ALATerm.nameComplete), name, Field.Store.YES));
-        if (args != null && args.length > 0)
+        if (args != null && args.length > 0 && args[0] != null)
             doc.add(new StringField(fieldName(ALATerm.value), args[0], Field.Store.YES));
         try {
             synchronized (this) {
@@ -1649,6 +1731,89 @@ public class Taxonomy implements Reporter {
         }
     }
 
+    /**
+     * Add a report.
+     * <p>
+     * Message codes are retrieved using a message bundle pointing to <code>taxonomy.properties</code>
+     * These are formatted with a message formatter and have the following arguments:
+     * </p>
+     * <ul>
+     *     <li>{0} The nameID of the vernacular name</li>
+     *     <li>{1} The vernacular name of the name</li>
+     *     <li>{2+} The associated information</li>
+     * </ul>
+     *  @param type The type of report
+     *
+     * @param code       The message code to use for the readable version of the report
+     * @param name       The vernacular name
+     * @param associated The associated information
+     */
+    @Override
+    public void report(IssueType type, String code, VernacularName name, String... associated) {
+        String message;
+        String nameID = name.getNameID();
+        String vernacularName = name.getVernacularName();
+        try {
+            String[] av = new String[2 + associated.length];
+            av[0] = nameID == null ? "" : nameID;
+            av[1] = vernacularName == null ? "" : vernacularName;
+            for (int i = 0; associated != null && i < associated.length; i++)
+                av[2 + i] = associated[i];
+            message = this.resources.getString(code);
+            message = message == null ? code : message;
+            message = MessageFormat.format(message, av);
+        } catch (MissingResourceException ex) {
+            logger.error("Can't find resource for " + code + " defaulting to code");
+            message = code;
+        }
+        switch (type) {
+            case ERROR:
+                // Print location of error for debugging
+                try {
+                    throw new IllegalStateException(message);
+                } catch (Exception ex) {
+                    logger.error(message, ex);
+                }
+                break;
+            case VALIDATION:
+                logger.error(message);
+                break;
+            case PROBLEM:
+                logger.warn(message);
+                break;
+            case COLLISION:
+                logger.info(message);
+                break;
+            case NOTE:
+            case COUNT:
+                logger.debug(message);
+                break;
+            default:
+                logger.warn("Unknown message type " + type + ": " + message);
+        }
+        Document doc = new Document();
+        doc.add(new StringField("type", ALATerm.TaxonomicIssue.qualifiedName(), Field.Store.YES));
+        doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
+        doc.add(new StringField(fieldName(DcTerm.type), type.name(), Field.Store.YES));
+        doc.add(new StringField(fieldName(DcTerm.subject), code, Field.Store.YES));
+        doc.add(new StringField(fieldName(DcTerm.description), message, Field.Store.YES));
+        doc.add(new StringField(fieldName(DcTerm.date), ISO8601.format(OffsetDateTime.now()), Field.Store.YES));
+        if (nameID != null)
+            doc.add(new StringField(fieldName(ALATerm.nameID), nameID, Field.Store.YES));
+        if (vernacularName != null)
+            doc.add(new StringField(fieldName(DwcTerm.vernacularName), vernacularName, Field.Store.YES));
+        if (associated != null && associated.length > 0)
+            doc.add(new StringField(fieldName(ALATerm.value), associated[0], Field.Store.YES));
+        try {
+            synchronized (this) {
+                this.indexWriter.addDocument(doc);
+                this.indexWriter.commit();
+                this.searcherManager.maybeRefresh();
+            }
+        } catch (IOException ex) {
+            logger.error("Unable to write report to index", ex);
+        }
+    }
 
     /**
      * Create a report of all issues that have arisen.
@@ -1666,9 +1831,15 @@ public class Taxonomy implements Reporter {
             String[] headers = output.stream().map(term -> term.toString()).collect(Collectors.toList()).toArray(new String[output.size()]);
             writer.writeNext(headers);
             this.counts.keySet().stream().sorted().forEach(type -> {
-                String message = this.resources.getString(type);
+                String message = "";
                 AtomicInteger count = this.counts.getOrDefault(type, new AtomicInteger(0));
-                message = MessageFormat.format(message, count.intValue());
+                try {
+                    message = this.resources.getString(type);
+                    message = MessageFormat.format(message, count.intValue());
+                } catch (MissingResourceException ex) {
+                    logger.error("No message for " + type);
+                    message = type + ": " + count;
+                }
                 logger.info(message);
                 Map<Term, String> doc = new HashMap<>();
                 doc.put(DcTerm.type, IssueType.COUNT.name());
@@ -1706,6 +1877,7 @@ public class Taxonomy implements Reporter {
      * Multiple calls to this function will create new indexes, based on the current state of
      * the taxonomy.
      * </p>
+     *
      * @throws IOException
      */
     public void createWorkingIndex() throws IOException {
@@ -1745,9 +1917,7 @@ public class Taxonomy implements Reporter {
     }
 
     /**
-     *
      * @param work The work area, null for a default.
-     *
      * @throws IndexBuilderException If unable to make the work area
      */
     private void makeWorkArea(File work) throws IndexBuilderException {
@@ -1773,7 +1943,7 @@ public class Taxonomy implements Reporter {
      */
     private void makeBaseOutputMap() {
         this.outputMap = new HashMap<>();
-        for (Map.Entry<Term, List<Term>> entry: NameSource.REQUIRED_TERMS.entrySet())
+        for (Map.Entry<Term, List<Term>> entry : NameSource.REQUIRED_TERMS.entrySet())
             this.outputMap.put(entry.getKey(), new HashSet<>(entry.getValue()));
     }
 
@@ -1782,11 +1952,10 @@ public class Taxonomy implements Reporter {
      * Add records to the document index.
      *
      * @param documents The records to add
-     *
      * @throws IOException if unable to write
      */
     public void addRecords(List<Document> documents) throws IOException {
-        for (Document doc: documents)
+        for (Document doc : documents)
             this.indexWriter.addDocument(doc);
     }
 
@@ -1801,7 +1970,7 @@ public class Taxonomy implements Reporter {
      * included in the output file.
      * </p>
      *
-     * @param type The row type
+     * @param type  The row type
      * @param terms The terms. If ordered, then the output map will respect the ordering
      */
     public void addOutputTerms(Term type, Collection<Term> terms) {
@@ -1827,9 +1996,9 @@ public class Taxonomy implements Reporter {
         }
         Map<Term, List<Term>> implied = NameSource.IMPLIED_TERMS.get(type);
         if (implied != null) {
-            for (Map.Entry<Term, List<Term>> entry: implied.entrySet()) {
+            for (Map.Entry<Term, List<Term>> entry : implied.entrySet()) {
                 if (terms.contains(entry.getKey())) {
-                    for (Term term: entry.getValue()) {
+                    for (Term term : entry.getValue()) {
                         if (!seen.contains(term)) {
                             map.add(term);
                             seen.add(term);
@@ -1884,7 +2053,6 @@ public class Taxonomy implements Reporter {
      * Get the output term list for this type of row
      *
      * @param type The row type
-     *
      * @return The list of terms to include
      */
     public List<Term> outputTerms(Term type) {
@@ -1915,7 +2083,7 @@ public class Taxonomy implements Reporter {
      *
      * @throws IOException Id unable to read the index
      */
-    public List<Map<Term,String>> getIndexValues(Term type, String taxonID) throws IOException {
+    public List<Map<Term, String>> getIndexValues(Term type, String taxonID) throws IOException {
 
         BooleanQuery.Builder builder = new BooleanQuery.Builder();
         builder.add(new TermQuery(new org.apache.lucene.index.Term("type", type.qualifiedName())), BooleanClause.Occur.MUST);
@@ -1945,12 +2113,50 @@ public class Taxonomy implements Reporter {
     }
 
     /**
+     * Query the taxon index for a single document.
+     *
+     * @param type    The type of document
+     * @param idTerm The index name of term that holds the identifier
+     * @param id The associated iderntifier
+     * @return The matching document or null for not found
+     * @throws IOException If unable to read the index
+     */
+    public Map<Term, String> getIndexValue(Term type, String idTerm, String id) throws IOException {
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(new TermQuery(new org.apache.lucene.index.Term("type", type.qualifiedName())), BooleanClause.Occur.MUST);
+        builder.add(new TermQuery(new org.apache.lucene.index.Term(idTerm, id)), BooleanClause.Occur.MUST);
+        BooleanQuery query = builder.build();
+        IndexSearcher searcher = this.searcherManager.acquire();
+        try {
+            TopDocs docs = searcher.search(query, 1, Sort.INDEXORDER);
+            if (docs.totalHits.value == 0)
+                return null;
+            if (docs.totalHits.value > 1)
+                throw new IllegalStateException("Document " + type + " with " + idTerm + "=" + id + " has more than one result");
+            Document document = searcher.doc(docs.scoreDocs[0].doc);
+            Map<Term, String> values = new HashMap<>();
+            for (IndexableField field : document) {
+                if (!field.name().equals("id") && !field.name().equals("type")) {
+                    Term term = fieldTerms.get(field.name());
+                    if (term == null)
+                        throw new IllegalStateException("Can't find term for " + field.name());
+                    values.put(term, field.stringValue());
+                }
+            }
+            return values;
+        } finally {
+            this.searcherManager.release(searcher);
+        }
+    }
+
+    /**
      * Create a sample of taxon concepts.
      * <p>
      * This can be used to create a resuced sample for testing purposes.
      * If the sampled element is a synonym then the accepted taxon is included.
      * If it is an accepted taxon then parents are included.
      * </p>
+     *
      * @param samples The sample size
      *
      * @throws IndexBuilderException if unable to build the sampel

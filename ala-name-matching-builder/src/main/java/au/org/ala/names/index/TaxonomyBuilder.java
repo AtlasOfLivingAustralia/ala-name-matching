@@ -156,6 +156,9 @@ public class TaxonomyBuilder {
             taxonomy.resolveUnplacedVernacular();
             taxonomy.resolveUnplacedReferences();
 
+            // Select preferred vernacular names
+            taxonomy.buildPreferredVernacular();
+
             if (samples != null)
                 taxonomy.sample(samples);
             if (output != null) {
