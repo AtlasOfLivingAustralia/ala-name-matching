@@ -592,6 +592,29 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(14, this.rowCount(new File(dir, "taxonvariant.txt")));
     }
 
+
+    // Issue 194
+    @Test
+    public void testPlaceUncoded3() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-44.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1, source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance i11 = this.taxonomy.getInstance("Accepted-1");
+        TaxonConceptInstance i12 = this.taxonomy.getInstance("Accepted-2");
+         assertNotNull(i11);
+        assertNotNull(i12);
+        TaxonConcept tc1 = i11.getContainer();
+        assertSame(i11, tc1.getRepresentative());
+        assertSame(tc1, i12.getContainer());
+        assertSame(i11, i11.getResolved());
+        assertSame(i11, i11.getResolvedAccepted());
+        assertSame(i11, i12.getResolved());
+        assertSame(i11, i12.getResolvedAccepted());
+    }
+
     @Test
     public void testWrite1() throws Exception {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));

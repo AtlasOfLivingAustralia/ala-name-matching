@@ -1,0 +1,3 @@
+taxonID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonomicStatus
+Accepted-1,dr123,ICZN,Aporocera (Aporocera) australis,"(Saunders, 1843)",species,accepted
+Accepted-2,dr123,,Aporocera australis,,,inferredAccepted
