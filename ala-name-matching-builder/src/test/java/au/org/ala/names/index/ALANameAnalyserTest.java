@@ -426,6 +426,55 @@ public class ALANameAnalyserTest {
         assertNull(result1.getInfraspecificEpithet());
     }
 
+    // Issue 194
+    @Test
+    public void testKey33() throws Exception {
+        NameAnalyser.AnalysisResult result1 = this.analyser.analyse(NomenclaturalClassifier.BOTANICAL, "Pterostylis cucullata subsp. sylvicola", "D.L.Jones", RankType.SUBSPECIES, TaxonomicType.HETEROTYPIC_SYNONYM, null, false);
+        NameAnalyser.AnalysisResult result2 = this.analyser.analyse(null, "Pterostylis cucullata subsp. sylvicola", "Pterostylis cucullata R.Br. ssp. sylvicola D.L.Jones", RankType.UNRANKED, TaxonomicType.INFERRED_ACCEPTED, null, false);
+        assertEquals(result1.getMononomial(), result2.getMononomial());
+        assertEquals(result1.getGenus(), result2.getGenus());
+        assertEquals(result1.getSpecificEpithet(), result2.getSpecificEpithet());
+        assertEquals(result1.getInfraspecificEpithet(), result2.getInfraspecificEpithet());
+        assertEquals(result1.getCultivarEpithet(), result2.getCultivarEpithet());
+        NameKey key1 = result1.getNameKey();
+        NameKey key2 = result2.getNameKey();
+        assertNotEquals(key1, key2);
+        key1 = result1.getNameKey().toNameKey();
+        key2 = result2.getNameKey().toNameKey();
+        assertNotEquals(key1, key2);
+        key1 = result1.getNameKey().toUnrankedNameKey();
+        key2 = result2.getNameKey().toUnrankedNameKey();
+        assertNotEquals(key1, key2);
+        key1 = result1.getNameKey().toUncodedNameKey();
+        key2 = result2.getNameKey().toUncodedNameKey();
+        assertEquals(key1, key2);
+   }
+
+
+    @Test
+    public void testKey34() throws Exception {
+        NameAnalyser.AnalysisResult result1 = this.analyser.analyse(NomenclaturalClassifier.ZOOLOGICAL, "Aporocera (Aporocera) australis", "(Saunders, 1843)", RankType.SPECIES, TaxonomicType.ACCEPTED, null, false);
+        NameAnalyser.AnalysisResult result2 = this.analyser.analyse(null, "Aporocera australis", null, RankType.UNRANKED, TaxonomicType.INFERRED_ACCEPTED, null, false);
+        assertEquals(result1.getMononomial(), result2.getMononomial());
+        assertEquals(result1.getGenus(), result2.getGenus());
+        assertEquals(result1.getSpecificEpithet(), result2.getSpecificEpithet());
+        assertEquals(result1.getInfraspecificEpithet(), result2.getInfraspecificEpithet());
+        assertEquals(result1.getCultivarEpithet(), result2.getCultivarEpithet());
+        NameKey key1 = result1.getNameKey();
+        NameKey key2 = result2.getNameKey();
+        assertNotEquals(key1, key2);
+        key1 = result1.getNameKey().toNameKey();
+        key2 = result2.getNameKey().toNameKey();
+        assertNotEquals(key1, key2);
+        key1 = result1.getNameKey().toUnrankedNameKey();
+        key2 = result2.getNameKey().toUnrankedNameKey();
+        assertNotEquals(key1, key2);
+        key1 = result1.getNameKey().toUncodedNameKey();
+        key2 = result2.getNameKey().toUncodedNameKey();
+        assertEquals(key1, key2);
+    }
+
+
     @Test
     public void testAuthorEquals1() throws Exception {
         assertEquals(0, this.analyser.compareAuthor(null, null));

@@ -225,6 +225,11 @@
     "parentOutput": {
       "ACCEPTED": false
     }
+  },{
+    "id" : "dr123",
+    "parent": "unknown",
+    "unrankedStrategy": "INFERRED_AND_SYNONYMS",
+    "defaultScore" : 50
   }
   ],
   "defaultProvider" : "unknown",

@@ -558,6 +558,63 @@ public class TaxonomyTest extends TestUtils {
         assertNull(i13.getResolvedParent());
     }
 
+    // Issue 194
+    @Test
+    public void testPlaceUncoded2() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-42.csv"), DwcTerm.Taxon);
+        CSVNameSource source2 = new CSVNameSource(this.resourceReader("taxonomy-43.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1, source2));
+        this.taxonomy.resolve();
+        TaxonConceptInstance i11 = this.taxonomy.getInstance("https://id.biodiversity.org.au/instance/apni/51411222");
+        TaxonConceptInstance i12 = this.taxonomy.getInstance("ALA_DR653_1129");
+        TaxonConceptInstance i13 = this.taxonomy.getInstance("https://id.biodiversity.org.au/taxon/apni/51412090");
+        assertNotNull(i11);
+        assertNotNull(i12);
+        assertNotNull(i13);
+        TaxonConcept tc1 = i11.getContainer();
+        assertSame(i11, tc1.getRepresentative());
+        assertSame(tc1, i12.getContainer());
+        assertSame(i11, i11.getResolved());
+        assertSame(i13, i11.getResolvedAccepted());
+        assertSame(i11, i12.getResolved());
+        assertSame(i13, i12.getResolvedAccepted());
+        File dir = new File(this.taxonomy.getWork(), "output");
+        dir.mkdir();
+        this.taxonomy.createDwCA(dir);
+        assertTrue(new File(dir, "meta.xml").exists());
+        assertTrue(new File(dir, "eml.xml").exists());
+        File taxon = new File(dir, "taxon.txt");
+        // this.dumpFile(taxon);
+        assertEquals(13, this.rowCount(taxon));
+        assertEquals(14, this.rowCount(new File(dir, "taxonvariant.txt")));
+    }
+
+
+    // Issue 194
+    @Test
+    public void testPlaceUncoded3() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-44.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1, source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance i11 = this.taxonomy.getInstance("Accepted-1");
+        TaxonConceptInstance i12 = this.taxonomy.getInstance("Accepted-2");
+         assertNotNull(i11);
+        assertNotNull(i12);
+        TaxonConcept tc1 = i11.getContainer();
+        assertSame(i11, tc1.getRepresentative());
+        assertSame(tc1, i12.getContainer());
+        assertSame(i11, i11.getResolved());
+        assertSame(i11, i11.getResolvedAccepted());
+        assertSame(i11, i12.getResolved());
+        assertSame(i11, i12.getResolvedAccepted());
+    }
+
     @Test
     public void testWrite1() throws Exception {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
@@ -575,7 +632,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(12, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(22, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(52, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(25, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(26, this.rowCount(new File(dir, "rightsholder.txt")));
 
     }
 
@@ -596,7 +653,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(5, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(6, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(6, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(26, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(27, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
 
@@ -746,7 +803,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(6, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(11, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(11, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(25, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(26, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
     // Test the presence of a taxon loop

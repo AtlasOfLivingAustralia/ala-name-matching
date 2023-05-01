@@ -98,7 +98,7 @@ public class ALANameAnalyser extends NameAnalyser {
     /**
      * Pattern for bare (no proper period) rank markers
      */
-    protected static final Pattern LOOSE_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS_LOOSE + "|" + RANK_PLACEHOLDER_MARKERS + ")\\.?\\s+");
+    protected static final Pattern LOOSE_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS_LOOSE + "|" + RANK_PLACEHOLDER_MARKERS + "|ssp\\.?)\\.?\\s+");
     /**
      * Pattern for unsure markers (cf, aff etc)
      */
