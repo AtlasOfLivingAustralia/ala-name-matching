@@ -424,7 +424,7 @@ public class ALANameIndexer {
             }
             String family = dwcr.value(DwcTerm.family);
             if (StringUtils.isNotEmpty(family)) {
-                NameIndexField.FAMILY.index(kingdom, doc);
+                NameIndexField.FAMILY.index(family, doc);
             }
             String genus = dwcr.value(DwcTerm.genus);
             String calculatedRank = "genus";
