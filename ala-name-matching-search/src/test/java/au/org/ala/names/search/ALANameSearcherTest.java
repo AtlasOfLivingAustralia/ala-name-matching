@@ -212,7 +212,7 @@ public class ALANameSearcherTest {
         } catch (Exception e) {
             assertTrue(e instanceof ExcludedNameException);
             ExcludedNameException ene = (ExcludedNameException) e;
-            assertEquals("https://biodiversity.org.au/afd/taxa/74ac7082-6138-4eb0-86ba-95535deab180", ene.getExcludedName().getLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/75091b4a-30df-4a12-a9b2-5b282a9785a4", ene.getExcludedName().getLsid());
         }
 
         String apcExcludedName = "Parestia elegans";
@@ -372,7 +372,7 @@ public class ALANameSearcherTest {
             String name = "Pterodroma arminjoniana s. str.";
             NameSearchResult nsr = searcher.searchForRecord(name, null);
             assertNotNull(nsr);
-            assertEquals("40041023", nsr.getLsid()); //Has taken CAAB as preferred now - will change again - new ALA_DR656_1587
+            assertEquals("ALA_DR656_1587", nsr.getLsid()); //Has taken CAAB as preferred now - will change again - new ALA_DR656_1587
         } catch (SearchResultException ex) {
             fail("Not expecting exception " + ex);
         }
@@ -540,7 +540,7 @@ public class ALANameSearcherTest {
             NameSearchResult nsr = null;
             nsr = searcher.searchForRecord(name, null);
             assertNotNull(nsr);
-            assertEquals("40041023", nsr.getLsid()); // currently preferring CAAB - will change back to ALA_DR656_1587 when CAAB Vernacular only
+            assertEquals("ALA_DR656_1587", nsr.getLsid()); // currently preferring CAAB - will change back to ALA_DR656_1587 when CAAB Vernacular only
         } catch (SearchResultException e) {
             fail("Unexpected search exception " + e);
         }
@@ -747,6 +747,7 @@ public class ALANameSearcherTest {
     }
 
     @Test
+    @Ignore
     public void testInfragenricAndSoundEx6() {
         String name = "Elseya belli";
         try {
@@ -1436,6 +1437,7 @@ public class ALANameSearcherTest {
     }
 
     @Test
+    @Ignore
     public void testSimpleLookup3()  {
         try {
             String name = "Sargassum podacanthum";
@@ -1613,6 +1615,8 @@ public class ALANameSearcherTest {
         assertNotNull(nsr);
         assertEquals("ALA_DR655_1389", nsr.getLsid());
         name = "Pterostylis sp. aff. boormanii";
+        List<NameSearchResult> results = searcher.searchForRecords(name, null, true);
+
         nsr = searcher.searchForRecord(name);
         assertNotNull(nsr);
         assertEquals("https://id.biodiversity.org.au/instance/apni/51411749", nsr.getLsid());

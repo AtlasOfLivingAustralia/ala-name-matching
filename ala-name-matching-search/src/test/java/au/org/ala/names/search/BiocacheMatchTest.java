@@ -38,7 +38,8 @@ public class BiocacheMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20230329-1");
+        //searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
     }
 
     @Test
@@ -267,7 +268,8 @@ public class BiocacheMatchTest {
 
         cl.setScientificName("Limnodynastes dumerilii");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-        assertEquals("https://biodiversity.org.au/afd/taxa/2c50c2f6-7a0d-44e1-b549-458427b420c4", metrics.getResult().getLsid());
+        assertEquals("https://biodiversity.org.au/afd/taxa/127e0064-a097-44ce-82a4-8bc30f5770b8", metrics.getResult().getLsid());
+        //assertEquals("https://biodiversity.org.au/afd/taxa/2c50c2f6-7a0d-44e1-b549-458427b420c4", metrics.getResult().getLsid());
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType()); // Dereferenced synonym
         assertTrue(metrics.getErrors().contains(ErrorType.PARENT_CHILD_SYNONYM));
     }
@@ -443,7 +445,8 @@ public class BiocacheMatchTest {
             String name = "Eucalyptus leucoxylon ssp.";
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("https://id.biodiversity.org.au/node/apni/2909698", metrics.getResult().getLsid());
+            //assertEquals("https://id.biodiversity.org.au/node/apni/2909698", metrics.getResult().getLsid());
+            assertEquals("https://id.biodiversity.org.au/taxon/apni/51439876", metrics.getResult().getLsid());
             assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);

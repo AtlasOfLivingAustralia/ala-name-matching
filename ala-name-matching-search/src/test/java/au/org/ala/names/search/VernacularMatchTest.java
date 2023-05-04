@@ -42,7 +42,8 @@ public class VernacularMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20230329-1");
+        //searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
     }
 
     @Test
@@ -200,7 +201,7 @@ public class VernacularMatchTest {
         NameSearchResult result = this.searcher.searchForCommonName(name);
         assertNotNull(result); // Multiple results
         String lsid = result.getLsid();
-        assertEquals("https://id.biodiversity.org.au/node/apni/2913720", lsid);
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51433014", lsid);
         name = "Kangaroo Island Dunnart";
         result = this.searcher.searchForCommonName(name);
         assertNull(result); // Multiple matches
@@ -213,7 +214,7 @@ public class VernacularMatchTest {
         NameSearchResult result = this.searcher.searchForCommonName(name);
         assertNotNull(result);
         String lsid = result.getLsid();
-        assertEquals("https://biodiversity.org.au/afd/taxa/9baa55f2-69c1-486c-91f7-f96e58b7c945", lsid);
+        assertEquals("https://biodiversity.org.au/afd/taxa/2843e4d8-931a-41f0-875e-f6756f44088f", lsid);
     }
 
     // Advisory Vic
