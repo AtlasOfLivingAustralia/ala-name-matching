@@ -732,10 +732,8 @@ public class ALANameIndexer {
         NameIndexField.LSID.index(newLsid, doc);
         if(language != null) {
             NameIndexField.LANGUAGE.index(language.toLowerCase().trim(), doc);
-         }
-        if (priority != null) {
-            NameIndexField.PRIORITY.index(priority, doc);
         }
+        NameIndexField.PRIORITY.index(priority == null ? 0 : priority, doc);
 
         return doc;
     }
