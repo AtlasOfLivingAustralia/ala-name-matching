@@ -20,8 +20,10 @@ import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.IndexOrDocValuesQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.util.NumericUtils;
 import org.apache.lucene.util.QueryBuilder;
 
 /**
@@ -237,7 +239,10 @@ abstract public class FieldType<T> {
     public static final FieldType<Integer> INTEGER = new FieldType<Integer>(Integer.class, "integer") {
         @Override
         public void index(Integer value, String name, Document document) {
-            document.add(new IntPoint(name, value));
+            if (value != null) {
+                document.add(new NumericDocValuesField(name, value));
+                document.add(new IntPoint(name, value));
+            }
             document.add(new StoredField(name, value));
         }
 
@@ -248,7 +253,9 @@ abstract public class FieldType<T> {
 
         @Override
         public Query search(Integer value, String name) {
-            return IntPoint.newExactQuery(name, value);
+            Query pq = IntPoint.newExactQuery(name, value);
+            Query vq = NumericDocValuesField.newSlowExactQuery(name, value);
+            return new IndexOrDocValuesQuery(pq, vq);
         }
 
         /**
@@ -261,7 +268,9 @@ abstract public class FieldType<T> {
          */
         @Override
         public Query searchRange(Integer lower, Integer upper, String name) {
-            return IntPoint.newRangeQuery(name, lower, upper);
+            Query pq = IntPoint.newRangeQuery(name, lower, upper);
+            Query vq = NumericDocValuesField.newSlowRangeQuery(name, lower, upper);
+            return new IndexOrDocValuesQuery(pq, vq);
         }
     };
 
@@ -274,7 +283,10 @@ abstract public class FieldType<T> {
     public static final FieldType<Double> DOUBLE = new FieldType<Double>(Double.class, "double") {
         @Override
         public void index(Double value, String name, Document document) {
-            document.add(new DoublePoint(name, value));
+            if (value != null) {
+                document.add(new NumericDocValuesField(name, NumericUtils.doubleToSortableLong(value)));
+                document.add(new DoublePoint(name, value));
+            }
             document.add(new StoredField(name, value));
         }
 
@@ -285,7 +297,9 @@ abstract public class FieldType<T> {
 
         @Override
         public Query search(Double value, String name) {
-            return DoublePoint.newExactQuery(name, value);
+            Query pq = DoublePoint.newExactQuery(name, value);
+            Query vq = NumericDocValuesField.newSlowExactQuery(name, NumericUtils.doubleToSortableLong(value));
+            return new IndexOrDocValuesQuery(pq, vq);
         }
 
         /**
@@ -298,7 +312,11 @@ abstract public class FieldType<T> {
          */
         @Override
         public Query searchRange(Double lower, Double upper, String name) {
-            return DoublePoint.newRangeQuery(name, lower, upper);
+            Query pq = DoublePoint.newRangeQuery(name, lower, upper);
+            Query vq = NumericDocValuesField.newSlowRangeQuery(name,
+                    NumericUtils.doubleToSortableLong(lower),
+                    NumericUtils.doubleToSortableLong(upper));
+            return new IndexOrDocValuesQuery(pq, vq);
         }
     };
 
