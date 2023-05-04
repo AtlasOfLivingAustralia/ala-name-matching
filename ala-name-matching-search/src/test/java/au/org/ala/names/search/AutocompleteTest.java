@@ -86,7 +86,7 @@ public class AutocompleteTest {
         assertNotNull(results);
         assertTrue(results.size() > 0);
         Map first = results.get(0);
-        assertEquals("Acacia dodonaeifolia", first.get("name"));
+        assertEquals("Acacia dampieri", first.get("name"));
     }
 
     @Test
