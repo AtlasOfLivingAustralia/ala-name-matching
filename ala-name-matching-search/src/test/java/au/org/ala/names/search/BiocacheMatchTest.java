@@ -109,7 +109,7 @@ public class BiocacheMatchTest {
         cl.setGenus("Graphis");
         cl.setSpecificEpithet("notreallyaname");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-        assertEquals("NZOR-6-132826", metrics.getResult().getLsid()); // Can't find Graphis homonym so gets Graphidaceae
+        assertEquals("NZOR-6-122770", metrics.getResult().getLsid()); // Now finds Graphis
     }
 
     @Test
