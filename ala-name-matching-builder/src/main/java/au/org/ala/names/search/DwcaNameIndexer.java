@@ -719,7 +719,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         String name = doc.get(NameIndexField.NAME.toString());
         String nameComplete = doc.get(NameIndexField.NAME_COMPLETE.toString());
         String lsid = doc.get(NameIndexField.LSID.toString());
-        String commonName = doc.get(NameIndexField.CONCAT_NAME.toString());
+        String commonName = doc.get(NameIndexField.COMMON_NAME.toString());
          //get the canonical version if the sciname
         String cname = name;
         ParsedName pn = null;
