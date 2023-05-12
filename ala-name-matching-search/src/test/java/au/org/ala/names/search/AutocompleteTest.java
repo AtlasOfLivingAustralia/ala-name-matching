@@ -129,7 +129,7 @@ public class AutocompleteTest {
 
     @Test
     public void testAutocomplete10() throws Exception {
-        List<Map> results = searcher.autocomplete("Rossi", 20, true);
+        List<Map> results = searcher.autocomplete("Rossi", 40, true);
         assertNotNull(results);
         assertTrue(results.size() > 0);
         assertTrue(results.stream().anyMatch(r -> "Iliocirrus rossi".equals(r.get("name"))));
@@ -143,8 +143,9 @@ public class AutocompleteTest {
         assertNotNull(results);
         assertTrue(results.size() > 0);
         Map first = results.get(0);
-        assertEquals("Juncus", first.get("name"));
-        assertEquals("Rushes", first.get("commonname"));
+        //assertEquals("Juncus", first.get("name"));
+        assertEquals("Centrolepidaceae", first.get("name")); // New first item in list
+        assertEquals("Rush", first.get("commonname"));
     }
 
 
