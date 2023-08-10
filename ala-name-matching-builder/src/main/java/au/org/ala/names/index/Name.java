@@ -248,7 +248,12 @@ abstract public class Name<T extends TaxonomicElement, C extends TaxonomicElemen
      * @param taxonomy The resolving taxonomy
      */
     public void resolvePrincipal(Taxonomy taxonomy) {
-        this.principal = this.findPrincipal(taxonomy);
+        try {
+            this.principal = this.findPrincipal(taxonomy);
+        } catch (Exception ex)
+        {
+            taxonomy.report(IssueType.ERROR, "name.Loop", ex.getMessage(),  ex.getMessage());
+        }
         if (this.principal == null)
             taxonomy.report(IssueType.PROBLEM, "name." + this.getClass().getSimpleName() + ".noPrincipal", this, null);
         else if (this.concepts.size() > 1)

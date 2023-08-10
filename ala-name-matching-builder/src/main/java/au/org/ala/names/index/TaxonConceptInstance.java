@@ -866,8 +866,27 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * @return The resolved parent
      */
     public TaxonConceptInstance getResolvedParent() {
+
         return this.getResolvedParent(this, MAX_RESOLUTION_STEPS, null, true);
     }
+
+    /**
+     * Get a completely resolved parent.
+     * <p>
+     * Synonyms and parent taxa are traced through the resolution
+     * </p>
+     * This is a variant to catch and log loop errors where used in the functional call
+     * @return The resolved parent
+     */
+    public TaxonConceptInstance getResolvedParent(Taxonomy taxonomy) {
+        try {
+            return this.getResolvedParent(this, MAX_RESOLUTION_STEPS, null, true);
+        } catch (Exception ex){
+         taxonomy.report(IssueType.ERROR,"possible loop catch 2" + ex.getMessage(), this.scientificName, ex.getMessage());
+            return null;
+        }
+    }
+
 
     /**
      * Trace the parent taxon.
@@ -1158,6 +1177,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             if (this.isForbidden()) {
                 return null;
             }
+
             throw new ResolutionException("Detected possible loop resolving " + original);
         }
         TaxonConceptInstance resolved = this.getResolved();
@@ -1322,7 +1342,16 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     public void detectDiscard(Taxonomy taxonomy, Collection<TaxonConceptInstance> allInstances) throws IndexBuilderException {
         if (!this.hasFlag(TaxonFlag.SYNTHETIC) || this.isForbidden())
             return;
-        boolean required = allInstances.stream().anyMatch(tci -> !tci.isForbidden() && tci.getResolvedParent() == this);
+//        boolean required = true;
+//        try{
+          boolean  required = allInstances.stream().anyMatch(tci -> !tci.isForbidden() && tci.getResolvedParent(taxonomy) == this);
+//        } catch (Exception ex)
+//        {
+//
+//            taxonomy.report(IssueType.ERROR, "possible loop catch 1" + ex.getMessage(), this.scientificName, ex.getMessage());
+//            required = false;
+//        }
+
         if (!required) {
             this.setForbidden(true);
             taxonomy.count("count.resolve.synthetic.discarded");
@@ -1340,7 +1369,13 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     public void resolveDiscarded(Taxonomy taxonomy) throws IndexBuilderException {
         if (!this.isForbidden())
             return;
-        TaxonConceptInstance parent = this.getResolvedParent();
+        try {
+            TaxonConceptInstance parent = this.getResolvedParent();
+        } catch (Exception ex)
+        {
+            taxonomy.report(IssueType.ERROR, "possible loop catch 2" + ex.getMessage(), this.scientificName, ex.getMessage());
+            parent = null;
+        }
         if (parent == null)
             return; // Ignore and leave forbidden
         String provenance;

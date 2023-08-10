@@ -34,7 +34,7 @@ public class AutocompleteTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20230329-1");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20230329-2");
         // searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
     }
 
@@ -128,12 +128,14 @@ public class AutocompleteTest {
     }
 
     @Test
+    //changed test value from Natatolana rossi - AFD considers it misidentified now.
     public void testAutocomplete10() throws Exception {
         List<Map> results = searcher.autocomplete("Rossi", 40, true);
         assertNotNull(results);
         assertTrue(results.size() > 0);
         assertTrue(results.stream().anyMatch(r -> "Iliocirrus rossi".equals(r.get("name"))));
-        assertTrue(results.stream().anyMatch(r -> "Natatolana rossi".equals(r.get("name"))));
+        assertTrue(results.stream().anyMatch(r -> "Nesothrips rossi".equals(r.get("name"))));
+       // assertTrue(results.stream().anyMatch(r -> "Natatolana rossi".equals(r.get("name"))));
     }
 
 

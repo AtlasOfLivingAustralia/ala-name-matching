@@ -38,7 +38,7 @@ public class BiocacheMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20230329-1");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20230329-2");
         //searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
     }
 
@@ -236,7 +236,7 @@ public class BiocacheMatchTest {
         cl.setScientificName("Myosurus minimus");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
         assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
-        assertEquals("NZOR-6-93927", metrics.getResult().getLsid());
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51446130", metrics.getResult().getLsid());
     }
 
     @Test

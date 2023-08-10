@@ -40,8 +40,8 @@ public class ALANameSearcherTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-      searcher = new ALANameSearcher("/data/lucene/namematching-20230329-1");
-      //  searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
+      searcher = new ALANameSearcher("/data/lucene/namematching-20230329-2");
+      //searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
     }
 
     @Test
@@ -150,12 +150,13 @@ public class ALANameSearcherTest {
     }
 
     @Test
+    //updated assertion ID - now ALA_DR652_158
     public void parserBlackList() throws Exception {
         //Petaurus australis unnamed subsp. - this name should NOT throw a NPE (although it generates an unhappiness in the parser)
         String name = "Petaurus australis unnamed subsp.";
         String lsid = searcher.searchForLSID(name, true);
         assertNotNull(lsid);
-        assertEquals("ALA_DR652_239", lsid);
+        assertEquals("ALA_DR652_159", lsid);
     }
 
     @Test
@@ -367,9 +368,13 @@ public class ALANameSearcherTest {
      }
 
     @Test
+    @Ignore
+    // This species was in the EPBC list - however it has now been removed from that list
+    // With the change of  CAAB from taxonomy reference to vernacular reference, we don't have a taxon entry for this species.
     public void testsStrMarker4()  {
         try {
             String name = "Pterodroma arminjoniana s. str.";
+           // String name = "Pterodroma arminjoniana";
             NameSearchResult nsr = searcher.searchForRecord(name, null);
             assertNotNull(nsr);
             assertEquals("ALA_DR656_1587", nsr.getLsid()); //Has taken CAAB as preferred now - will change again - new ALA_DR656_1587
@@ -416,6 +421,8 @@ public class ALANameSearcherTest {
         }
     }
 
+
+
     @Test
     public void testsStrMarker8() {
         try {
@@ -452,6 +459,8 @@ public class ALANameSearcherTest {
             fail("Not expecting exception " + ex);
         }
     }
+
+
 
     @Test
     public void testSpeciesConstructFromClassification() {
@@ -534,6 +543,8 @@ public class ALANameSearcherTest {
     }
 
     @Test
+    @Ignore
+    // This species no longer appears on the endangered list and doesn't appear in the Taxonomy.
     public void testSpMarker4()  {
         try {
             String name = "Pterodroma arminjoniana s. str.";
@@ -819,6 +830,7 @@ public class ALANameSearcherTest {
     public void testOutOfGeography1() {
         String name = "Loxodonta africana";
         LinnaeanRankClassification classification = new LinnaeanRankClassification();
+        classification.setKingdom("Animalia");
         classification.setPhylum("Chordata");
         classification.setKlass("Mammalia");
         classification.setOrder("Proboscidea");
@@ -932,9 +944,10 @@ public class ALANameSearcherTest {
     }
 
     @Test
+    //updated LSID to reflect change in list and APNI
     public void testGetPrimaryLsid4() {
-        String primaryLsid = searcher.getPrimaryLsid("ALA_DR655_118");
-        assertEquals("https://id.biodiversity.org.au/node/apni/2917784", primaryLsid);
+        String primaryLsid = searcher.getPrimaryLsid("ALA_DR22436_128");
+        assertEquals("https://id.biodiversity.org.au/node/apni/2891142", primaryLsid);
     }
 
     @Test
@@ -1613,14 +1626,14 @@ public class ALANameSearcherTest {
         String name = "Pterostylis sp. aff. boormanii (Beechworth)";
         NameSearchResult nsr = searcher.searchForRecord(name);
         assertNotNull(nsr);
-        assertEquals("ALA_DR655_1389", nsr.getLsid());
+        assertEquals("ALA_DR655_1392", nsr.getLsid());
         name = "Pterostylis sp. aff. boormanii";
         List<NameSearchResult> results = searcher.searchForRecords(name, null, true);
 
         nsr = searcher.searchForRecord(name);
         assertNotNull(nsr);
-        assertEquals("https://id.biodiversity.org.au/instance/apni/51411749", nsr.getLsid());
-        assertEquals("https://id.biodiversity.org.au/taxon/apni/51412340", nsr.getAcceptedLsid());
+        assertEquals("https://id.biodiversity.org.au/instance/apni/51441972", nsr.getLsid());
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51441976", nsr.getAcceptedLsid());
     }
 
 
@@ -1668,12 +1681,14 @@ public class ALANameSearcherTest {
 
     // Location-specific populations of Koalas
     @Test
+    //updated references dues to changes in list IDs
     public void testMetricsLookup4() throws Exception {
         LinnaeanRankClassification cl = new LinnaeanRankClassification();
         cl.setScientificName("Phascolarctos cinereus (Koala)");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR656_1404", metrics.getResult().getLsid());
+        assertEquals("https://biodiversity.org.au/afd/taxa/e9d6fbbd-1505-4073-990a-dc66c930dad6", metrics.getResult().getLsid());
+       // assertEquals("ALA_DR656_1404", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1682,7 +1697,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus (combined populations of Qld, NSW and the ACT)");
         metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR656_1404", metrics.getResult().getLsid());
+        assertEquals("ALA_DR656_1453", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1691,7 +1706,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus (Koala, Guba)");
         metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR656_1404", metrics.getResult().getLsid());
+        assertEquals("https://biodiversity.org.au/afd/taxa/e9d6fbbd-1505-4073-990a-dc66c930dad6", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1700,7 +1715,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus (Koala, Guba)");
         metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR656_1404", metrics.getResult().getLsid());
+        assertEquals("https://biodiversity.org.au/afd/taxa/e9d6fbbd-1505-4073-990a-dc66c930dad6", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1709,7 +1724,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus ( Koala )");
         metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR656_1404", metrics.getResult().getLsid());
+        assertEquals("https://biodiversity.org.au/afd/taxa/e9d6fbbd-1505-4073-990a-dc66c930dad6", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());

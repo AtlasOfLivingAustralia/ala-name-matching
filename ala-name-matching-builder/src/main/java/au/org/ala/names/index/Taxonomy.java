@@ -674,23 +674,34 @@ public class Taxonomy implements Reporter {
         logger.info("Validating suspiciously similar names");
         TaxonNameSoundEx soundEx = new TaxonNameSoundEx();
         Map<ScientificName, Map<String, List<ScientificName>>> nameCounts = new HashMap(this.names.size());
-        this.names.values().stream().filter(n -> !n.getRank().isHigherThan(RankType.SPECIES)).forEach(sn -> {
-            String name = soundEx.soundEx(sn.getScientificName());
-            for (TaxonConcept tc: sn.getConcepts()) {
-                List<TaxonConceptInstance> principals = tc.getPrincipals();
-                if (principals == null)
-                    continue;
-                Set<ScientificName> parents = principals.stream().
-                        filter(tci -> tci.isAccepted()).map(tci -> tci.getResolvedParent()).
-                        filter(tci -> tci != null).map(tci -> tci.getContainer()).
-                        filter(pc -> pc != null).map((pc -> pc.getContainer())).
-                        filter(pn -> pn != null).collect(Collectors.toSet());
-                for (ScientificName pn: parents) {
-                    Map<String, List<ScientificName>> counts = nameCounts.computeIfAbsent(pn, k -> new HashMap<String, List<ScientificName>>());
-                    counts.computeIfAbsent(name, n -> new ArrayList<>()).add(sn);
+
+            this.names.values().stream().filter(n -> !n.getRank().isHigherThan(RankType.SPECIES)).forEach(sn -> {
+                String name = soundEx.soundEx(sn.getScientificName());
+                for (TaxonConcept tc : sn.getConcepts()) {
+                    List<TaxonConceptInstance> principals = tc.getPrincipals();
+                    if (principals == null)
+                        continue;
+                    try {
+                        Set<ScientificName> parents = principals.stream().
+                                filter(tci -> tci.isAccepted()).map(tci -> tci.getResolvedParent()).
+                                filter(tci -> tci != null).map(tci -> tci.getContainer()).
+                                filter(pc -> pc != null).map((pc -> pc.getContainer())).
+                                filter(pn -> pn != null).collect(Collectors.toSet());
+                        for (ScientificName pn : parents) {
+                            Map<String, List<ScientificName>> counts = nameCounts.computeIfAbsent(pn, k -> new HashMap<String, List<ScientificName>>());
+                            counts.computeIfAbsent(name, n -> new ArrayList<>()).add(sn);
+                        }
+
+                    } catch (Exception ex){
+                        String code = "name.spelling";
+                        String count = "count.spelling" + ex.getMessage();
+                        IssueType type = IssueType.ERROR;
+                        this.report(type, code, sn, new ArrayList<>());
+                    }
+
                 }
-            }
-        });
+            });
+
         for (ScientificName sn: nameCounts.keySet()) {
             for (Map.Entry<String, List<ScientificName>> collision: nameCounts.get(sn).entrySet().stream().filter(c -> c.getValue().size() > 1).collect(Collectors.toList())) {
                 Set<TaxonConceptInstance> instances = collision.getValue().stream().flatMap(tn -> tn.getConcepts().stream()).
@@ -886,7 +897,9 @@ public class Taxonomy implements Reporter {
     public void resolveDiscards() throws IndexBuilderException, IOException {
         logger.info("Resolving discarded/forbidden concepts");
         final Collection<TaxonConceptInstance> allInstances = this.instances.values();
+
         allInstances.stream().forEach(tci -> tci.resolveDiscarded(this)); // Not for parallel streams
+
         this.indexWriter.commit();
         this.searcherManager.maybeRefresh();
         logger.info("Finished resolving discarded/forbidden concepts");

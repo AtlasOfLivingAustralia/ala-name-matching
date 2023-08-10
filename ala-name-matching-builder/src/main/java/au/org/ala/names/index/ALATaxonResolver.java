@@ -424,10 +424,17 @@ public class ALATaxonResolver implements TaxonResolver {
             TaxonConceptInstance r1 = i1.getAccepted() == null ? i1 : i1.getAccepted().getRepresentative();
             TaxonConceptInstance p2 = i2;
             while (p2 != null) {
-                p2 = p2.getAccepted() == null ? p2 : p2.getAccepted().getRepresentative();
-                if (p2.getContainer() == r1.getContainer())
-                    return r1;
-                p2 = p2.getParent() == null ? null : p2.getParent().getRepresentative();
+                try {
+                    p2 = p2.getAccepted() == null ? p2 : p2.getAccepted().getRepresentative();
+                    if (p2 == null || r1 == null){
+                        break; /* trying to find null pointer exception*/
+                    }
+                    if (p2.getContainer() == r1.getContainer())
+                        return r1;
+                    p2 = p2.getParent() == null ? null : p2.getParent().getRepresentative();
+                } catch (Error ex){
+                    return  null;
+                }
             }
             i1 = i1.getParent() == null ? null : i1.getParent().getRepresentative();
         }

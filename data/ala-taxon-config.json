@@ -164,7 +164,7 @@
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "taxonomicStatus": "EXCLUDED"
             },
-            "adjustment": -1000
+            "adjustment": -2000
           },
           {
             "condition": {
@@ -837,7 +837,10 @@
       "parent": "default",
       "rightsHolder": "Atlas of Living Australia",
       "licence": "CC-BY",
-      "defaultScore" : 10000
+      "defaultScore" : 10000,
+      "parentOutput": {
+        "EXCLUDED": true
+      }
      },
     {
       "id" : "dr19724",
@@ -1113,7 +1116,10 @@
       "authority": false,
       "defaultScore" : 2500,
       "defaultParentTaxon": "Plantae",
-      "conceptResolutionPriority": "ADDITIONAL"
+      "conceptResolutionPriority": "ADDITIONAL",
+      "parentOutput": {
+        "EXCLUDED": true
+      }
     },
     {
       "id" : "dr2704",

@@ -42,7 +42,7 @@ public class VernacularMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20230329-1");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20230329-2");
         //searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
     }
 
