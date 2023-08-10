@@ -1460,12 +1460,18 @@ public class Taxonomy implements Reporter {
     public TaxonomicElement findElement(NomenclaturalClassifier code, String name, NameProvider provider, RankType rank) {
         NameKey nameKey = null;
         nameKey = this.analyser.analyse(code, name, null, rank, null, null, provider.isLoose()).getNameKey().toNameKey();
-        if (nameKey.isUncoded())
-            return this.bareNames.get(nameKey.toUnrankedNameKey());
-        if (nameKey.isUnranked())
-            return this.unrankedNames.get(nameKey.toUnrankedNameKey());
-        ScientificName scientificName = this.names.get(nameKey.toNameKey());
-        return scientificName == null ? null : scientificName.findElement(this, provider);
+        if (!nameKey.isUncoded() && !nameKey.isUnranked()) {
+            ScientificName scientificName = this.names.get(nameKey.toNameKey());
+            TaxonomicElement element = scientificName == null ? null : scientificName.findElement(this, provider);
+            if (element != null)
+                return element;
+        }
+        if (!nameKey.isUncoded()) {
+            TaxonomicElement element = this.unrankedNames.get(nameKey.toUnrankedNameKey());
+            if (element != null)
+                return element;
+        }
+        return this.bareNames.get(nameKey.toUncodedNameKey());
     }
 
     /**

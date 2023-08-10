@@ -230,6 +230,29 @@
     "parent": "unknown",
     "unrankedStrategy": "INFERRED_AND_SYNONYMS",
     "defaultScore" : 50
+  },{
+    "id" : "dr124",
+    "parent": "unknown",
+    "unrankedStrategy": "INFERRED_AND_SYNONYMS",
+    "defaultScore" : 50,
+    "keyAdjuster": {
+      "adjustments": [
+        {
+          "condition": {
+            "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBSPECIES"
+          },
+          "rank": "INFRASPECIFICNAME"
+        },
+        {
+          "condition": {
+            "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "VARIETY"
+          },
+          "rank": "INFRASPECIFICNAME"
+        }
+      ]
+    }
   }
   ],
   "defaultProvider" : "unknown",
