@@ -34,7 +34,7 @@
         <!-- This project uses UTF8 for Regular Expressions -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <org.apache.lucene.version>8.1.0</org.apache.lucene.version>
-        <com.fasterxml.jackson.version>2.12.3</com.fasterxml.jackson.version>
+        <com.fasterxml.jackson.version>2.12.7.1</com.fasterxml.jackson.version>
         <targetJdk>1.8</targetJdk>
         <animal-sniffer-signature.artifact>java18</animal-sniffer-signature.artifact>
         <animal-sniffer-signature.version>1.0</animal-sniffer-signature.version>
