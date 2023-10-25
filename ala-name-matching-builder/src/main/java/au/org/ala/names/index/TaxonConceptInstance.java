@@ -958,6 +958,54 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         String provenance = taxonomy.getResources().getString("instance.accepted.resolve.loop.provenance");
         this.addProvenance(provenance);
     }
+    /**
+     * Test to see if this instance is a synonym whose accepted name
+     * calls this instance its parent
+     * <p>
+     * A synonym/parent loop is one provided by the source taxonomy. This checks for a close loop
+     * and doesn't look for a loop more than one step away. If found, change synonym to inferred accepted and
+     * make its parent the unknown taxon.
+     *
+     * @return TaxonConcept if there is a loop, otherwise return null
+     * </p>
+     */
+    public TaxonConceptInstance findSimpleSynonymParentLoop(){
+        TaxonConceptInstance tci = this;
+        if (tci.acceptedNameUsageID == null) // not a synonym
+        {
+            return null;
+        }
+        TaxonConceptInstance acceptedInstance =  tci.getResolvedAccepted();
+        if (acceptedInstance != null && acceptedInstance.parentNameUsageID!= null) {
+            if (acceptedInstance.parentNameUsageID.equals(tci.taxonID)) {
+                return tci;
+            }
+        }
+        return null;
+    }
+
+    public void resolveSimpleSynonymParentLoop(Taxonomy taxonomy){
+
+                taxonomy.report(IssueType.PROBLEM, "instance.accepted.synonym.loop", this.taxonID, this.acceptedNameUsageID );
+                this.taxonomicStatus = TaxonomicType.INFERRED_UNPLACED;
+                this.accepted = null;
+                this.acceptedNameUsage = null;
+                this.acceptedNameUsageID = null;
+                this.score = null;
+
+                String unknownTaxonID = this.getProvider().getUnknownTaxonID();
+                TaxonConceptInstance unknownTaxon = taxonomy.getInstance(unknownTaxonID);
+                this.parentNameUsage = null;
+                this.parentNameUsageID = unknownTaxonID;
+                this.parent = unknownTaxon;
+
+                String provenance = taxonomy.getResources().getString("instance.accepted.synonym.loop.provenance");
+                this.addProvenance(provenance);
+
+
+
+    }
+
 
     /**
      * Test to see if this instance has a simple parent loop.
