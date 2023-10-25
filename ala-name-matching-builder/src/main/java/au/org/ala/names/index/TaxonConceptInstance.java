@@ -956,7 +956,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             this.parent = unknownTaxon;
         }
         String provenance = taxonomy.getResources().getString("instance.accepted.resolve.loop.provenance");
-        this.addProvenance(provenance);
+        this.addProvenance(MessageFormat.format(provenance, this.taxonID));
     }
     /**
      * Test to see if this instance is a synonym whose accepted name

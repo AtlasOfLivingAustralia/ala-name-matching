@@ -425,6 +425,14 @@ public class ALATaxonResolver implements TaxonResolver {
             TaxonConceptInstance p2 = i2;
             while (p2 != null) {
                 p2 = p2.getAccepted() == null ? p2 : p2.getAccepted().getRepresentative();
+                try{
+                if(p2.getContainer() == null || r1.getContainer() == null){
+                    return null;
+                }
+                } catch (Exception ex){ //not the best approach, but null check is still an error
+                    return null;
+                }
+
                 if (p2.getContainer() == r1.getContainer())
                     return r1;
                 p2 = p2.getParent() == null ? null : p2.getParent().getRepresentative();
