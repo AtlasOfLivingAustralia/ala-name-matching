@@ -119,8 +119,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             DwcTerm.order,
             DwcTerm.family,
             DwcTerm.genus,
-            DwcTerm.specificEpithet,
-            DwcTerm.infraspecificEpithet
+            DwcTerm.specificEpithet
+           // DwcTerm.infraspecificEpithet
     );
     /**
      * The ranks corresponding to {@link #CLASSIFICATION_FIELDS}. The two lists must correspond.
@@ -132,8 +132,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             RankType.ORDER,
             RankType.FAMILY,
             RankType.GENUS,
-            RankType.SPECIES,
-            RankType.SUBSPECIES
+            RankType.SPECIES
+           // RankType.SUBSPECIES
     );
 
     /**
