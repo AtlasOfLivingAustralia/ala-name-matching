@@ -164,7 +164,7 @@
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "taxonomicStatus": "EXCLUDED"
             },
-            "adjustment": -1000
+            "adjustment": -2000
           },
           {
             "condition": {
@@ -837,8 +837,11 @@
       "parent": "default",
       "rightsHolder": "Atlas of Living Australia",
       "licence": "CC-BY",
-      "defaultScore" : 10000
-     },
+      "defaultScore" : 10000,
+      "parentOutput": {
+        "EXCLUDED": true
+      }
+    },
     {
       "id" : "dr19724",
       "name": "AusFungi",
@@ -846,6 +849,14 @@
       "rightsHolder": "Royal Botanic Gardens Victoria",
       "licence": "CC-BY",
       "defaultScore" : 5000,
+      "adjuster": {
+        "forbidden": [
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "scientificName": "Eukaryota"
+          }
+        ]
+      },
       "scores": {
         "Fungi": 6000
       },
@@ -883,6 +894,46 @@
       "parent": "apni-apc",
       "authority": false,
       "defaultScore" : 5000,
+      "adjuster": {
+        "forbidden": [
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonomicStatus": "EXCLUDED"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SECTION_BOTANY"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBSECTION_BOTANY"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SERIES_BOTANY"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBSERIES_BOTANY"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "CULTIVAR"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "TRIBE"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBTRIBE"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBGENUS"
+          }
+        ]
+      },
       "scores": {
         "Plantae": 6000
       },
@@ -946,7 +997,74 @@
           {
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
             "nomenclaturalStatus": "NUDUM"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonomicStatus": "EXCLUDED"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "scientificName": "Eukaryota"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SECTION_BOTANY"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBSECTION_BOTANY"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SERIES_BOTANY"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBSERIES_BOTANY"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "PHYLUM"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "CLASS"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBCLASS"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUPERORDER"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "ORDER"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBORDER"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "CULTIVAR"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "TRIBE"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBTRIBE"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBGENUS"
           }
+
+
+
         ],
         "adjustments": [
           {
@@ -1026,7 +1144,7 @@
             },
             "adjustment": -2000
           },
-           {
+          {
             "condition": {
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "nomenclaturalStatus": "NUDUM"
@@ -1088,6 +1206,42 @@
           {
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
             "scientificName": "ROOT"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "scientificName": "Prokaryota"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SECTION_BOTANY"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBSECTION_BOTANY"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SERIES_BOTANY"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBSERIES_BOTANY"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "CULTIVAR"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "TRIBE"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBTRIBE"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBGENUS"
           }
         ]
       },
@@ -1100,6 +1254,14 @@
               "taxonRank": "CLASS"
             },
             "rank": "PHYLUM"
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "scientificName": "Protozoa",
+              "taxonRank": "KINGDOM"
+            },
+            "scientificName": "PROTISTA"
           }
         ]
       }
@@ -1113,7 +1275,10 @@
       "authority": false,
       "defaultScore" : 2500,
       "defaultParentTaxon": "Plantae",
-      "conceptResolutionPriority": "ADDITIONAL"
+      "conceptResolutionPriority": "ADDITIONAL",
+      "acceptedOutput": {
+        "EXCLUDED": false
+      }
     },
     {
       "id" : "dr2704",
@@ -1141,9 +1306,17 @@
             "condition": {
               "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
               "scientificName" : "Viruses",
-              "taxonRank": "KINGDOM"
+              "taxonRank": "UNRANKED"
             },
             "scientificName": "VIRUS"
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "scientificName": "Protozoa",
+              "taxonRank": "KINGDOM"
+            },
+            "scientificName": "PROTISTA"
           }
         ]
       }
