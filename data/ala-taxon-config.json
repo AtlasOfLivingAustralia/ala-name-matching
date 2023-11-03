@@ -894,6 +894,7 @@
       "parent": "apni-apc",
       "authority": false,
       "defaultScore" : 5000,
+      "defaultVernacularScore" : 350,
       "adjuster": {
         "forbidden": [
           {
@@ -948,6 +949,7 @@
       "parent": "apni-apc",
       "authority": false,
       "defaultScore" : 3000,
+      "defaultVernacularScore" : 400,
       "adjuster": {
         "forbidden": [
           {
@@ -1200,6 +1202,7 @@
       "rightsHolder": "New Zealand Organism Register",
       "licence": "CC-BY",
       "defaultScore": 3000,
+      "defaultVernacularScore" : 300,
       "conceptResolutionPriority": "ADDITIONAL",
       "adjuster": {
         "forbidden": [
