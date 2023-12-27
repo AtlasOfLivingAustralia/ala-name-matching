@@ -1,0 +1,106 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>au.org.ala</groupId>
+        <artifactId>ala-name-matching</artifactId>
+        <version>4.4-SNAPSHOT</version>
+    </parent>
+
+    <groupId>au.org.ala</groupId>
+    <artifactId>old-name-matching-shaded</artifactId>
+    <version>${parent.version}</version>
+    <packaging>jar</packaging>
+
+    <name>Old Name Matching Library (Shaded)</name>
+    <description>
+        For use when making side-by-side comparisons.
+        A shaded version of the old name matching library, with classes and resources moved.
+        This ensures that the old library's namespace does not collide with the new library.
+    </description>
+
+    <!-- To get the old name matching libraries -->
+    <repositories>
+        <repository>
+            <id>ala-all</id>
+            <url>https://nexus.ala.org.au/content/groups/public/</url>
+        </repository>
+        <repository>
+            <id>gbif-all</id>
+            <url>https://repository.gbif.org/content/groups/gbif</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>au.org.ala</groupId>
+            <artifactId>ala-name-matching-search</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>au.org.ala</groupId>
+            <artifactId>ala-name-matching-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <artifactSet>
+                                <includes>
+                                    <include>au.org.ala:ala-name-matching-search</include>
+                                    <include>au.org.ala:ala-name-matching-model</include>
+                                    <include>org.gbif:dwc-api</include>
+                                    <include>org.gbif:gbif-api</include>
+                                    <include>org.gbif:gbif-common</include>
+                                    <include>org.gbif:name-parser</include>
+                                    <include>uk.ac.shef.wit:simmetrics</include>
+                                </includes>
+                            </artifactSet>
+                            <relocations>
+                                <relocation>
+                                    <pattern>au.org.ala</pattern>
+                                    <shadedPattern>old.au.org.ala</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.gbif</pattern>
+                                    <shadedPattern>old.org.gbif</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>uk.ac</pattern>
+                                    <shadedPattern>old.uk.ac</shadedPattern>
+                                </relocation>
+                            </relocations>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/license/**</exclude>
+                                        <exclude>META-INF/*</exclude>
+                                        <exclude>META-INF/maven/**</exclude>
+                                        <exclude>LICENSE</exclude>
+                                        <exclude>NOTICE</exclude>
+                                        <exclude>/*.txt</exclude>
+                                        <exclude>build.properties</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
