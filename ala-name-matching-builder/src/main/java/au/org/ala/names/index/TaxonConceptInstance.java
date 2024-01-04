@@ -1209,6 +1209,11 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             return resolved;
         }
         accepted = accepted.getResolvedAccepted(original, steps - 1, trace, exception);
+//        Null being returned from this - but can't see why this function should ever return null.
+        if (accepted == null){
+            logger.warn("Inexplicable Null representative instance for " + ae + " when resolving " + this);
+            return resolved;
+        }
         if (!accepted.isForbidden()) {
             return accepted;
         }

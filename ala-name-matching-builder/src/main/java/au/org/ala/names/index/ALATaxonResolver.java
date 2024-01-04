@@ -213,8 +213,14 @@ public class ALATaxonResolver implements TaxonResolver {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }
-            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus() == taxonomicStatus && tci.getAccepted() != null && tci.getAccepted().getContainer().getContainer() == acceptedScientificName).findFirst()).isPresent()) {
-                resolution.addInternal(instance, resolved.get(), this.taxonomy);
+            try {
+                if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus() == taxonomicStatus && tci.getAccepted() != null && tci.getAccepted().getContainer().getContainer() == acceptedScientificName).findFirst()).isPresent()) {
+                    resolution.addInternal(instance, resolved.get(), this.taxonomy);
+                    return;
+                }
+            }
+            catch (Exception ex){
+                taxonomy.report(IssueType.ERROR, "taxonResolver.nullError", scientificName.getDisplayName(), taxonomicStatus.name());
                 return;
             }
             if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus().getGroup() == taxonomicGroup && tci.getAccepted() != null && tci.getAccepted().getContainer().getContainer() == acceptedScientificName).findFirst()).isPresent()) {

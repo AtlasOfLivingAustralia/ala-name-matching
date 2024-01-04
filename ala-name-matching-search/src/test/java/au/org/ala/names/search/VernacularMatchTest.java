@@ -42,7 +42,7 @@ public class VernacularMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20230725-3");
     }
 
     @Test
@@ -200,7 +200,7 @@ public class VernacularMatchTest {
         NameSearchResult result = this.searcher.searchForCommonName(name);
         assertNotNull(result); // Multiple results
         String lsid = result.getLsid();
-        assertEquals("https://id.biodiversity.org.au/node/apni/2913720", lsid);
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51433014", lsid);
         name = "Kangaroo Island Dunnart";
         result = this.searcher.searchForCommonName(name);
         assertNull(result); // Multiple matches
@@ -246,7 +246,7 @@ public class VernacularMatchTest {
         NameSearchResult result = this.searcher.searchForCommonName(name);
         assertNotNull(result);
         String lsid = result.getLsid();
-        assertEquals("ALA_DR18234_247", lsid);
+        assertEquals("ALA_DR22913_416", lsid);
     }
 
     // Check for potentially offsensive names

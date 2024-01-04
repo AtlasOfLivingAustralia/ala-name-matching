@@ -34,7 +34,7 @@ public class AutocompleteTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20230725-3");
     }
 
     @Test
@@ -86,7 +86,7 @@ public class AutocompleteTest {
         assertNotNull(results);
         assertTrue(results.size() > 0);
         Map first = results.get(0);
-        assertEquals("Acacia dampieri", first.get("name"));
+        assertEquals("Acacia donaldsonii", first.get("name"));
     }
 
     @Test
