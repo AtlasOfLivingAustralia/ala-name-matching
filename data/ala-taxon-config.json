@@ -1341,6 +1341,18 @@
       "defaultScore" : 0,
       "conceptResolutionPriority": "FILLER",
       "unrankedStrategy": "INFERRED_AND_SYNONYMS"
+    },
+    {
+      "id" : "dr22912",
+      "name": "ALA_Conservation",
+      "description": "Taxonomic entries added via the conservation list. Placed higher than APNI but lower than APC to test synonym acceptance",
+      "parent": "default",
+      "rightsHolder": "Atlas of Living Australia",
+      "licence": "CC-BY",
+      "defaultScore" : 4000,
+      "parentOutput": {
+        "EXCLUDED": true
+      }
     }
   ],
   "defaultProvider" : "dr5393",
