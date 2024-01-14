@@ -7,9 +7,8 @@
         <version>4.4-SNAPSHOT</version>
     </parent>
 
-    <groupId>au.org.ala</groupId>
+    <groupId>au.org.ala.names</groupId>
     <artifactId>old-name-matching-shaded</artifactId>
-    <version>${parent.version}</version>
     <packaging>jar</packaging>
 
     <name>Old Name Matching Library (Shaded)</name>
