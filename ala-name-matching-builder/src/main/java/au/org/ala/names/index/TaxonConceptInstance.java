@@ -684,8 +684,13 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * @return The base score
      */
     public int getBaseScore() {
-        if (this.baseScore == null)
-            this.baseScore = this.provider.computeBaseScore(this, this);
+        if (this.baseScore == null) {
+            synchronized (this) {
+                if (this.baseScore == null) {
+                    this.baseScore = this.provider.computeBaseScore(this, this);
+                }
+            }
+        }
         return this.baseScore;
     }
 
@@ -701,8 +706,13 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     public int getBaseScore(TaxonConceptInstance original) {
         if (original == this)
             throw new IllegalStateException("Uncaught loop in score computation from " + original);
-        if (this.baseScore == null)
-            this.baseScore = this.provider.computeBaseScore(original, this);
+        if (this.baseScore == null) {
+            synchronized (this) {
+                if (this.baseScore == null) {
+                    this.baseScore = this.provider.computeBaseScore(original, this);
+                }
+            }
+        }
         return this.baseScore;
     }
 
@@ -718,7 +728,11 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      */
     public int getScore() {
         if (this.score == null) {
-            this.score = this.provider.computeScore(this);
+            synchronized (this) {
+                if (this.score == null) {
+                    this.score = this.provider.computeScore(this);
+                }
+            }
         }
         return this.score;
     }

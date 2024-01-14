@@ -402,16 +402,21 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     /**
      * Get a representative taxon instance.
      * <p>
-     * This is, basically, the highest priority instance that the concept has used.
+     * This is, basically, the highest priority instance that the concept has used, with
+     * accepted instances first.
      * </p>
      *
      * @return The representative instance
      */
     @Override
     public TaxonConceptInstance getRepresentative() {
-        if (this.resolution == null)
-            return this.instances.isEmpty() ? null : this.instances.get(0);
-        return this.resolution.getUsed().isEmpty() ? null : this.resolution.getUsed().get(0);
+        List<TaxonConceptInstance> used = this.resolution == null ? this.instances : this.resolution.getUsed();
+        if (used == null || used.isEmpty())
+            return null;
+        Optional<TaxonConceptInstance> placed = used.stream().filter(tci -> tci.isAccepted()).findFirst();
+        if (placed.isPresent())
+            return placed.get();
+        return used.get(0);
     }
 
 

@@ -1,0 +1,11 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,acceptedNameUsage,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonomicStatus,kingdom,family,genus,subgenus,specificEpithet,provenance,source,taxonomicFlag
+Kingdom-1,,,,dr124,ICN,Plantae,,family,inferredAccepted,,,,,,,,synthetic
+Family-1,,,,dr124,ICN,Araceae,,family,inferredAccepted,Plantae,Araceae,,,,,,synthetic
+Genus-1,,,,dr124,ICN,Typhonium,,genus,inferredAccepted,Plantae,Araceae,Typhonium,,,,,synthetic
+Synonym-1-1,,,Typhonium sp. aff. brownii,dr124,ICN,Typhonium aff. brownii,,species,synonym,Plantae,Araceae,Typhonium,,,,,
+Species-1,,,,dr124,ICN,Typhonium sp. aff. brownii,,species,accepted,Plantae,Araceae,Typhonium,,,,,
+Family-2,,,,dr124,ICN,Loranthaceae,,family,inferredAccepted,Plantae,Loranthaceae,,,,,,synthetic
+Genus-2,,,,dr124,ICN,Decaisnina,,genus,inferredAccepted,Plantae,Loranthaceae,Decaisnina,,,,,synthetic
+Species-2,,,,dr124,ICN,Decaisnina signata,,species,inferredAccepted,Plantae,Loranthaceae,Decaisnina,,signata,,,synthetic
+Synonym-2-1,,,Decaisnina signata subsp. cardiophylla,dr124,ICN,Decaisnina signata cardiophylla,,subspecies,synonym,Plantae,Loranthaceae,Decaisnina,,signata,,https://lists.ala.org.au/speciesListItem/list/dr124?q=Decaisnina+signata+cardiophylla,
+Subspecies-2,,,,dr124,ICN,Decaisnina signata subsp. cardiophylla,,subspecies,accepted,Plantae,Loranthaceae,Decaisnina,,signata,,https://lists.ala.org.au/speciesListItem/list/dr124?q=Decaisnina+signata+subsp.+cardiophylla,

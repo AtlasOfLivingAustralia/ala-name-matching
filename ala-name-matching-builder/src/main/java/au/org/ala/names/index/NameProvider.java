@@ -620,11 +620,21 @@ public class NameProvider {
         Integer specific = this.getSpecificScore(instance.getScientificName());
         if (specific != null)
             return specific;
-        TaxonConceptInstance p = instance.getParent() == null ? null : instance.getParent().getRepresentative();
-        if (p == original || p == instance) {
-            this.reporter.report(IssueType.PROBLEM, "instance.parent.resolve.loop", original, Collections.singletonList(instance));
-            p = instance.getResolvedParent();
-            p = p == null ? null : p.getRepresentative();
+        TaxonConceptInstance p = null;
+        if (instance.getParent() != null) {
+            p = instance.getParent().getRepresentative();
+            if (p == original || p == instance) {
+                this.reporter.report(IssueType.PROBLEM, "instance.parent.resolve.loop", original, Collections.singletonList(instance));
+                p = instance.getResolvedParent();
+                p = p == null ? null : p.getRepresentative();
+            }
+        }
+        if (p == null && instance.getAccepted() != null) {
+            p = instance.getAccepted().getRepresentative();
+            if (p == original || p == instance) {
+                this.reporter.report(IssueType.PROBLEM, "instance.accepted.resolve.loop", original, Collections.singletonList(instance));
+                p = null; // Attempting resolution at this point just ends in disaster
+            }
         }
         int score = p != null && p.getProvider() == this ? p.getBaseScore(original) : this.getDefaultScore();
         return Math.max(TaxonomicElement.MIN_SCORE, Math.min(TaxonomicElement.MAX_SCORE, score));
