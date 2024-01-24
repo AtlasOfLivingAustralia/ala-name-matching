@@ -77,6 +77,7 @@ public class AutocompleteTest {
         assertNotNull(results);
         assertTrue(results.size() > 0);
         Map first = results.get(0);
+        assertTrue(results.stream().anyMatch(r -> "Acacia".equals(r.get("name"))));
         assertEquals("Acacia", first.get("name"));
     }
 
@@ -132,7 +133,7 @@ public class AutocompleteTest {
         assertNotNull(results);
         assertTrue(results.size() > 0);
         assertTrue(results.stream().anyMatch(r -> "Iliocirrus rossi".equals(r.get("name"))));
-        assertTrue(results.stream().anyMatch(r -> "Natatolana rossi".equals(r.get("name"))));
+        assertTrue(results.stream().anyMatch(r -> "Triplectides rossi".equals(r.get("name"))));
     }
 
 
@@ -142,8 +143,10 @@ public class AutocompleteTest {
         assertNotNull(results);
         assertTrue(results.size() > 0);
         Map first = results.get(0);
-        assertEquals("Juncus", first.get("name"));
-        assertEquals("Rushes", first.get("commonname"));
+        assertEquals("Juncus subglaucus", first.get("name"));
+        assertEquals("Rush", first.get("commonname"));
+        assertTrue(results.stream().anyMatch(r -> "Juncus".equals(r.get("name"))));
+        assertTrue(results.stream().anyMatch(r -> "Rushes".equals(r.get("commonname"))));
     }
 
 

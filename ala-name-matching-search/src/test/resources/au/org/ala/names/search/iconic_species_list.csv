@@ -15,7 +15,6 @@ BIRDS
 ,Willy Wagtail,,Animalia,Chordata,Aves,PASSERIFORMES,RHIPIDURIDAE,Rhipidura,leucophrys,,,Yes,Yes,Yes
 ,Red Wattlebird,,Animalia,Chordata,Aves,PASSERIFORMES,MELIPHAGIDAE,Anthochaera,carunculata,,,Yes,Yes,Yes
 ,Noisy Miner,,Animalia,Chordata,Aves,PASSERIFORMES,MELIPHAGIDAE,Manorina,melanocephala,,,Yes,Yes,Yes
-,Barn Owl,,Animalia,Chordata,Aves,,,Tyto,alba,,,Yes,Yes,Yes
 ,Rainbow Lorikeet,,Animalia,Chordata,Aves,PSITTACIFORMES,PSITTACIDAE,Trichoglossus,haematodus,,,Yes,Yes,Yes
 ,Galah,,Animalia,Chordata,Aves,PSITTACIFORMES,CACATUIDAE,Eolophus,roseicapilla,,,Yes,Yes,Yes
 ,New Holland Honeyeater,,Animalia,Chordata,Aves,PASSERIFORMES,MELIPHAGIDAE,Phylidonyris,novaehollandiae,,,Yes,Yes,Yes
@@ -52,7 +51,7 @@ FROGS
 ,Growling Grass Frog,,Animalia,Chordata,Amphibia,ANURA,Pelodryadidae,Litoria,raniformis,,,yes,yes,yes
 ,Green Tree Frog,,Animalia,Chordata,Amphibia,ANURA,Pelodryadidae,Litoria,caerulea,,,yes,yes,yes
 ,Red-eyed Tree Frog,,Animalia,Chordata,Amphibia,ANURA,Pelodryadidae,Litoria,chloris,,,yes,yes,yes
-,Giant Burrowing Frog,,Animalia,Chordata,Amphibia,ANURA,Limnodynastidae,Heleioporus,australiacus,,,yes,yes,yes
+,Giant Burrowing Frog,,Animalia,Chordata,Amphibia,ANURA,Limnodynastidae,Heleioporus,australiacus,australiacus,,yes,yes,yes
 ,Baw-baw Frog,,Animalia,Chordata,Amphibia,ANURA,Limnodynastidae,Philoria,frosti,,,yes,yes,No
 ,Giant Banjo Frog,,Animalia,Chordata,Amphibia,ANURA,Limnodynastidae,Limnodynastes,interioris,,,yes,No,No
 ,Southern Gastric Brooding Frog,,Animalia,Chordata,Amphibia,ANURA,Myobatrachidae,Rheobatrachus,silus,,,yes,yes,No
@@ -73,7 +72,7 @@ MAMMALS
 ,Quokka,,Animalia,Chordata,Mammalia,DIPROTODONTIA,MACROPODIDAE,Setonix,brachyurus,,,yes,yes,yes
 ,Yellow-footed Rock Wallaby,,Animalia,Chordata,Mammalia,DIPROTODONTIA,MACROPODIDAE,Petrogale,xanthopus,xanthopus,,yes,yes,yes
 ,Red-tailed Phascogale,,Animalia,Chordata,Mammalia,DASYUROMORPHIA,DASYURIDAE,Phascogale,calura,,,yes,yes,yes
-,Swamp Wallaby,,Animalia,Chordata,Mammalia,DIPROTODONTIA,MACROPODIDAE,Wallabia,bicolor,,,yes,yes,yes
+,Swamp Wallaby,,Animalia,Chordata,Mammalia,DIPROTODONTIA,MACROPODIDAE,Wallabia,bicolor,bicolor,,yes,yes,yes
 ,Black Flying Fox,,Animalia,Chordata,Mammalia,CHIROPTERA,PTEROPODIDAE,Pteropus,alecto,,,yes,yes,yes
 ,Dusky Hopping Mouse,,Animalia,Chordata,Mammalia,RODENTIA,MURIDAE,Notomys,fuscus,,,yes,yes,yes
 ,Brush-tailed Rock Wallaby,,Animalia,Chordata,Mammalia,DIPROTODONTIA,MACROPODIDAE,Petrogale,penicillata,,,yes,yes,yes
@@ -86,7 +85,7 @@ MAMMALS
 ,Short-beaked Echidna,,Animalia,Chordata,Mammalia,MONOTREMATA,TACHYGLOSSIDAE,Tachyglossus,aculeatus,,,yes,yes,yes
 ,Common Ringtail Possum,,Animalia,Chordata,Mammalia,DIPROTODONTIA,PSEUDOCHEIRIDAE,Pseudocheirus,peregrinus,,,yes,yes,yes
 ,Greater Glider,,Animalia,Chordata,Mammalia,DIPROTODONTIA,PSEUDOCHEIRIDAE,Petauroides,volans,,,yes,yes,yes
-,Northern Hairy Nosed Wombat,,Animalia,Chordata,Mammalia,DIPROTODONTIA,VOMBATIDAE,Lasiorhinus,krefftii,,,yes,No,No
+,Northern Hairy Nosed Wombat,,Animalia,Chordata,Mammalia,DIPROTODONTIA,VOMBATIDAE,Lasiorhinus,krefftii,krefftii,,yes,No,No
 
 REPTILES
 ,Frilled Lizard,,Animalia,Chordata,Reptilia,SQUAMATA,AGAMIDAE,Chlamydosaurus,kingii,,,yes,yes,yes

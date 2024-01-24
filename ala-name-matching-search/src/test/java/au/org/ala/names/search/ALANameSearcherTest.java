@@ -155,7 +155,7 @@ public class ALANameSearcherTest {
         String name = "Petaurus australis unnamed subsp.";
         String lsid = searcher.searchForLSID(name, true, true);
         assertNotNull(lsid);
-        assertEquals("ALA_DR22912_1508", lsid);
+        assertEquals("ALA_DR22912_422", lsid);
     }
 
     @Test
