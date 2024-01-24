@@ -38,7 +38,7 @@ public class BiocacheMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20230725-3");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20230725-4");
     }
 
     @Test

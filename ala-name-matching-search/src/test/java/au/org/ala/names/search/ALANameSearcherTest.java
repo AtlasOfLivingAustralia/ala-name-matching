@@ -40,7 +40,7 @@ public class ALANameSearcherTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20230725-3");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20230725-4");
     }
 
     @Test
@@ -153,7 +153,7 @@ public class ALANameSearcherTest {
     public void parserBlackList() throws Exception {
         //Petaurus australis unnamed subsp. - this name should NOT throw a NPE (although it generates an unhappiness in the parser)
         String name = "Petaurus australis unnamed subsp.";
-        String lsid = searcher.searchForLSID(name, true);
+        String lsid = searcher.searchForLSID(name, true, true);
         assertNotNull(lsid);
         assertEquals("ALA_DR22912_1508", lsid);
     }
@@ -372,7 +372,7 @@ public class ALANameSearcherTest {
             String name = "Pterodroma arminjoniana s. str.";
             NameSearchResult nsr = searcher.searchForRecord(name, null);
             assertNotNull(nsr);
-            assertEquals("ALA_DR22912_1177", nsr.getLsid());
+            assertEquals("ALA_DR22912_350", nsr.getLsid());
         } catch (SearchResultException ex) {
             fail("Not expecting exception " + ex);
         }
@@ -385,7 +385,7 @@ public class ALANameSearcherTest {
             String name = "Vespa velutina";
             NameSearchResult nsr = searcher.searchForRecord(name, null, true);
             assertNotNull(nsr);
-            assertEquals("ALA_DR22913_1775", nsr.getLsid());
+            assertEquals("ALA_DR22913_1252", nsr.getLsid());
         } catch (SearchResultException ex) {
             fail("Not expecting exception " + ex);
         }
@@ -541,7 +541,7 @@ public class ALANameSearcherTest {
             NameSearchResult nsr = null;
             nsr = searcher.searchForRecord(name, null);
             assertNotNull(nsr);
-            assertEquals("ALA_DR22912_1177", nsr.getLsid());
+            assertEquals("ALA_DR22912_350", nsr.getLsid());
         } catch (SearchResultException e) {
             fail("Unexpected search exception " + e);
         }
@@ -1611,14 +1611,11 @@ public class ALANameSearcherTest {
         assertEquals("https://id.biodiversity.org.au/taxon/apni/51644646", nsr.getLsid());
     }
 
-
+    // Pterostylis sp. aff. boormanii (Beechworth) no longer in index
     @Test
     public void testAffLookup1() throws Exception  {
-        String name = "Pterostylis sp. aff. boormanii (Beechworth)";
+        String name = "Pterostylis sp. aff. boormanii";
         NameSearchResult nsr = searcher.searchForRecord(name);
-        assertNotNull(nsr);
-        assertEquals("ALA_DR22912_1243", nsr.getLsid());
-        name = "Pterostylis sp. aff. boormanii";
         nsr = searcher.searchForRecord(name);
         assertNotNull(nsr);
         assertEquals("https://id.biodiversity.org.au/instance/apni/51441972", nsr.getLsid());
@@ -1675,7 +1672,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus (Koala)");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR22912_1128", metrics.getResult().getLsid());
+        assertEquals("ALA_DR22912_414", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1684,7 +1681,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus (combined populations of Qld, NSW and the ACT)");
         metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR22912_1128", metrics.getResult().getLsid());
+        assertEquals("ALA_DR22912_414", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1693,7 +1690,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus (Koala, Guba)");
         metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR22912_1128", metrics.getResult().getLsid());
+        assertEquals("ALA_DR22912_414", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1702,7 +1699,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus (Koala, Guba)");
         metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR22912_1128", metrics.getResult().getLsid());
+        assertEquals("ALA_DR22912_414", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1711,7 +1708,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus ( Koala )");
         metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR22912_1128", metrics.getResult().getLsid());
+        assertEquals("ALA_DR22912_414", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -2164,7 +2161,7 @@ public class ALANameSearcherTest {
         cl.setScientificName(name);
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
         assertNotNull(metrics);
-        assertEquals("ALA_DR22913_148", metrics.getResult().getLsid());
+        assertEquals("ALA_DR22913_1121", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
     }

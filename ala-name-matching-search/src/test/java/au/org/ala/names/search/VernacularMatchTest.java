@@ -42,7 +42,7 @@ public class VernacularMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20230725-3");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20230725-4");
     }
 
     @Test
@@ -207,6 +207,8 @@ public class VernacularMatchTest {
     }
 
     // Sensitive WA
+
+    @Ignore // Rakali removed as common name
     @Test
     public void testVernacular15() {
         String name = "Rakali";
@@ -232,11 +234,8 @@ public class VernacularMatchTest {
         String name = "Caddisfly";
         NameSearchResult result = this.searcher.searchForCommonName(name);
         assertNull(result); // Multiple results
-        name = "Victoria Range Stringybark";
-        result = this.searcher.searchForCommonName(name);
-        assertNotNull(result);
-        String lsid = result.getLsid();
-        assertEquals("https://id.biodiversity.org.au/node/apni/2905514", lsid);
+        // Victoria Range Stringybark no longer listed as common name. Removed as test
+
     }
 
     // Invasive species
@@ -246,7 +245,7 @@ public class VernacularMatchTest {
         NameSearchResult result = this.searcher.searchForCommonName(name);
         assertNotNull(result);
         String lsid = result.getLsid();
-        assertEquals("ALA_DR22913_416", lsid);
+        assertEquals("ALA_DR22913_887", lsid);
     }
 
     // Check for potentially offsensive names
