@@ -1343,17 +1343,34 @@
       "unrankedStrategy": "INFERRED_AND_SYNONYMS"
     },
     {
-      "id" : "dr22912",
-      "name": "ALA_Conservation",
-      "description": "Taxonomic entries added via the conservation list. Placed higher than APNI but lower than APC to test synonym acceptance",
+      "id" : "dr24512",
+      "name": "ALA Preferred Vernacular Names",
+      "description": "ALA Preferred Vernacular Names",
       "parent": "default",
-      "rightsHolder": "Atlas of Living Australia",
-      "licence": "CC-BY",
-      "defaultScore" : 4000,
-      "parentOutput": {
-        "EXCLUDED": true
-      }
+      "defaultVernacularScore" : 500
+      },
+    {
+      "id" : "dr24514",
+      "name": "ALA Preferred Vernacular Names",
+      "description": "ALA Preferred Vernacular Names",
+      "parent": "default",
+      "defaultVernacularScore" : 500
+    },
+    {
+      "id" : "dr24516",
+      "name": "ALA Preferred Vernacular Names",
+      "description": "ALA Preferred Vernacular Names",
+      "parent": "default",
+      "defaultVernacularScore" : 500
+    },
+    {
+      "id" : "dr24517",
+      "name": "ALA Preferred Vernacular Names",
+      "description": "ALA Preferred Vernacular Names",
+      "parent": "default",
+      "defaultVernacularScore" : 500
     }
+
   ],
   "defaultProvider" : "dr5393",
   "inferenceProvider" : "dr13558",
