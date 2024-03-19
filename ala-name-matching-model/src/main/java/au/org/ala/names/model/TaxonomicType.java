@@ -28,10 +28,14 @@ package au.org.ala.names.model;
 public enum TaxonomicType {
     /** A taxon explicitly placed in the taxonomic tree */
     ACCEPTED("accepted", TaxonomicTypeGroup.ACCEPTED, true, true, false, false, false, false, true),
+    /** A taxon explicitly placed in the taxonomic tree from APNI Names */
+    UNREVIEWED("unreviewed", TaxonomicTypeGroup.ACCEPTED, true, true, false, false, false, false, true),
     /** A taxon placed in the taxonomiuc tree by an algorithm */
     INFERRED_ACCEPTED("inferredAccepted", TaxonomicTypeGroup.ACCEPTED, true, true, false, false, false, false, true),
     /** A generic synonym */
     SYNONYM("synonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, false, true),
+    /** A synonym from the APNI Names file */
+    UNREVIEWED_SYNONYM("unreviewedSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, false, true),
     /** A homotypic synonym (botany, true). A nomenclatural synonym, meaning that the same taxon has gone under a different name. This can occur when two people describe the same species. @see #OBJECTIVE_SYNONYM */
     HOMOTYPIC_SYNONYM("homotypicSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, false, true),
     /** An objective synonym (zoology, true). A nomenclatural synonym, meaning that the same taxon has gone under a different name. This can occur when two people describe the same species. @see #HOMOTYPIC_SYNONYM */

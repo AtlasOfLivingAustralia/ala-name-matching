@@ -34,7 +34,7 @@ public class AutocompleteTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20230725-5");
     }
 
     @Test
@@ -73,10 +73,11 @@ public class AutocompleteTest {
 
     @Test
     public void testAutocomplete4() throws Exception {
-        List<Map> results = searcher.autocomplete("Acacia", 10, true);
+        List<Map> results = searcher.autocomplete("Acacia", 10, false);
         assertNotNull(results);
         assertTrue(results.size() > 0);
         Map first = results.get(0);
+        assertTrue(results.stream().anyMatch(r -> "Acacia".equals(r.get("name"))));
         assertEquals("Acacia", first.get("name"));
     }
 
@@ -86,7 +87,7 @@ public class AutocompleteTest {
         assertNotNull(results);
         assertTrue(results.size() > 0);
         Map first = results.get(0);
-        assertEquals("Acacia dampieri", first.get("name"));
+        assertEquals("Acacia donaldsonii", first.get("name"));
     }
 
     @Test
@@ -132,7 +133,7 @@ public class AutocompleteTest {
         assertNotNull(results);
         assertTrue(results.size() > 0);
         assertTrue(results.stream().anyMatch(r -> "Iliocirrus rossi".equals(r.get("name"))));
-        assertTrue(results.stream().anyMatch(r -> "Natatolana rossi".equals(r.get("name"))));
+        assertTrue(results.stream().anyMatch(r -> "Triplectides rossi".equals(r.get("name"))));
     }
 
 
@@ -142,8 +143,10 @@ public class AutocompleteTest {
         assertNotNull(results);
         assertTrue(results.size() > 0);
         Map first = results.get(0);
-        assertEquals("Juncus", first.get("name"));
-        assertEquals("Rushes", first.get("commonname"));
+        assertEquals("Juncus subglaucus", first.get("name"));
+        assertEquals("Rush", first.get("commonname"));
+        assertTrue(results.stream().anyMatch(r -> "Juncus".equals(r.get("name"))));
+        assertTrue(results.stream().anyMatch(r -> "Rushes".equals(r.get("commonname"))));
     }
 
 

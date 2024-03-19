@@ -744,9 +744,11 @@ public class Taxonomy implements Reporter {
         synonymLoops.stream().forEach(tci -> tci.resolveSynonymLoop(this));
         Set<TaxonConceptInstance> parentLoops = this.instances.values().parallelStream().map(TaxonConceptInstance::findSimpleParentLoop).filter(tci -> tci != null).collect(Collectors.toSet());
         List<RankType> ranks = this.getOrderedRanks(parentLoops);
-        for (RankType rank: ranks) { // Reolve highest ranks first to see whether we can keep underlying taxonomy
+        for (RankType rank: ranks) { // Resolve highest ranks first to see whether we can keep underlying taxonomy
             parentLoops.stream().filter(tci -> tci.getRank() == rank).forEach(tci -> tci.resolveParentLoop(this));
         }
+        Set<TaxonConceptInstance> synonymParentLoops = this.instances.values().parallelStream().map(TaxonConceptInstance::findSimpleSynonymParentLoop).filter(tci -> tci != null).collect(Collectors.toSet());
+        synonymParentLoops.stream().forEach(tci -> tci.resolveSimpleSynonymParentLoop(this));
         logger.info("Finished resolving loops");
     }
 
