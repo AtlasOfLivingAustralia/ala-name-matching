@@ -2205,4 +2205,20 @@ public class ALANameSearcherTest {
         assertEquals("Orange Roughy", metrics.getResult().getVernacularName());
     }
 
+    @Test
+    // https://github.com/AtlasOfLivingAustralia/Taxonomic-Issues-Register_new/issues/161
+    public void testSearchEucalyptus() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setGenus("Eucalyptus");
+        cl.setSpecificEpithet("`hammonds rd'");
+        cl.setScientificName("Eucalyptus `hammonds rd'");
+        cl.setSubspecies("Eucalyptus pauciflora subsp. debeuzevillei");
+        cl.setRank("species");
+
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+
+        assertNotNull(metrics);
+        // Without patching it returns "Eucalyptus de beuzevillei"
+        assertEquals("Eucalyptus", metrics.getResult().getRankClassification().getScientificName());
+    }
 }
