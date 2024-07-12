@@ -19,6 +19,7 @@
         <module>ala-name-matching-builder</module>
         <module>ala-name-matching-tools</module>
         <module>ala-name-matching-distribution</module>
+        <module>old-name-matching-shaded</module>
     </modules>
 
     <name>ALA Name Matching (for Lucene 8 or above)</name>
