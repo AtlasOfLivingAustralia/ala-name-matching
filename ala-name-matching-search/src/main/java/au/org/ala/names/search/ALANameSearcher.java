@@ -1182,17 +1182,12 @@ public class ALANameSearcher {
                 }
             }
 
-            if (rank != null) {
-                int lower = rank.getId();
-                int upper = rank.getId() >= RankType.SPECIES.getId() ? 9999 : rank.getId();
-                BooleanQuery.Builder rankBuilder = new BooleanQuery.Builder();
-                rankBuilder.add(NameIndexField.RANK_ID.searchRange(lower, upper), BooleanClause.Occur.SHOULD);
-                  //cater for the situation where the search term could be a synonym that does not have a rank
-                // also ALA added concepts do NOT have ranks.
-                rankBuilder.add(NameIndexField.iS_SYNONYM.search("T"), BooleanClause.Occur.SHOULD);
-                rankBuilder.add(NameIndexField.ALA.search("T"), BooleanClause.Occur.SHOULD);
+            if (rank != null && type != MatchType.EXACT) {
+               BooleanQuery.Builder rankBuilder = new BooleanQuery.Builder();
+                rankBuilder.add(NameIndexField.RANK.search(rank.getRank()), BooleanClause.Occur.MUST);
                 builder.add(rankBuilder.build(), BooleanClause.Occur.MUST);
             }
+
             if (cl != null) {
                 this.appendLuceneQuery(cl, builder, true);
             }
