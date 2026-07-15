@@ -1182,7 +1182,7 @@ public class ALANameSearcher {
                 }
             }
 
-            if (rank != null) {
+            if (rank != null && type != MatchType.EXACT) {
                BooleanQuery.Builder rankBuilder = new BooleanQuery.Builder();
                 rankBuilder.add(NameIndexField.RANK.search(rank.getRank()), BooleanClause.Occur.MUST);
                 builder.add(rankBuilder.build(), BooleanClause.Occur.MUST);

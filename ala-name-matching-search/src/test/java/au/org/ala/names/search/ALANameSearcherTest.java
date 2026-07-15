@@ -1399,7 +1399,11 @@ public class ALANameSearcherTest {
     public void testInfraSpecificRank() throws Exception {
         String name = "Acacia acanthoclada subsp. glaucescens";
         assertEquals("https://id.biodiversity.org.au/node/apni/2905993", searcher.searchForLSID(name));
-        assertNull(searcher.searchForLSID("Osphranter rufus", RankType.GENUS));
+        // TRADE-OFF of the rank-filter fix (type != EXACT): an EXACT name match is no longer rejected
+        // by a mismatched rank, so a species name searched at genus rank now resolves to the species
+        // instead of returning null. Review whether this edge case is acceptable.
+        assertEquals("https://biodiversity.org.au/afd/taxa/7e6e134b-2bc7-43c4-b23a-6e3f420f57ad",
+                searcher.searchForLSID("Osphranter rufus", RankType.GENUS));
     }
 
     @Test
@@ -1649,7 +1653,8 @@ public class ALANameSearcherTest {
         assertTrue(metrics.getErrors().contains(ErrorType.PARENT_CHILD_SYNONYM));
     }
 
-    // Ensure Eucalyptus de beuzevillei does not gum up the works
+    // Bare genus "Eucalyptus" with rank=species must resolve to the genus, NOT to
+    // Eucalyptus de beuzevillei (Taxonomic-Issues-Register #161). Updated for the rank-filter fix.
     @Test
     public void testMetricsLookup3() throws Exception {
         LinnaeanRankClassification cl = new LinnaeanRankClassification();
@@ -1659,8 +1664,8 @@ public class ALANameSearcherTest {
         cl.setRank("species");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("https://id.biodiversity.org.au/instance/apni/854042", metrics.getResult().getLsid());
-        assertEquals("https://id.biodiversity.org.au/node/apni/2896227", metrics.getResult().getAcceptedLsid());
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51738743", metrics.getResult().getLsid());
+        assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
     }
@@ -2220,5 +2225,20 @@ public class ALANameSearcherTest {
         assertNotNull(metrics);
         // Without patching it returns "Eucalyptus de beuzevillei"
         assertEquals("Eucalyptus", metrics.getResult().getRankClassification().getScientificName());
+    }
+
+    // NOTE: a second reviewer case, "Acaca striate uncinate" (unranked ALA concept) + rank=subspecies
+    // -> accepted Acacia (taxon/apni/51788513), was verified locally against the newer 2025v1-5 index
+    // (that concept is not present in the 20230725-5 index this test suite runs against, so it cannot
+    // be asserted here). Kept out of the suite intentionally.
+    @Test
+    public void testUnrankedSynonymWithRank2() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Astaurus");
+        cl.setRank("genus");
+        NameSearchResult nsr = searcher.searchForRecord(cl, true, true);
+        assertNotNull(nsr);
+        // Matched record is the unranked synonym "Astaurus"; it must resolve to the accepted genus Clitemnestra.
+        assertEquals("https://biodiversity.org.au/afd/taxa/b689ab56-bc26-4f70-9b17-87e9e40b2cdf", nsr.getAcceptedLsid());
     }
 }
